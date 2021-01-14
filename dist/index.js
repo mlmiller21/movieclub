@@ -9,20 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const typeorm_1 = require("typeorm");
-const typeormconfig_1 = require("./typeormconfig");
-const Friends_1 = require("./entities/Friends");
-const User_1 = require("./entities/User");
+const connection_1 = require("./connection");
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
-    const connection = yield typeorm_1.createConnection({
-        type: "postgres",
-        database: typeormconfig_1.dbConfig.database,
-        username: typeormconfig_1.dbConfig.username,
-        password: typeormconfig_1.dbConfig.password,
-        logging: true,
-        synchronize: true,
-        entities: [User_1.User, Friends_1.Friends]
-    });
+    yield connection_1.connection;
+    console.log("test");
 });
 main();
 //# sourceMappingURL=index.js.map

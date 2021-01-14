@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Friends = void 0;
 const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
-let Friends = class Friends {
+let Friends = class Friends extends typeorm_1.BaseEntity {
 };
 __decorate([
     typeorm_1.PrimaryColumn(),
@@ -27,12 +27,12 @@ __decorate([
     __metadata("design:type", Date)
 ], Friends.prototype, "dateAdded", void 0);
 __decorate([
-    typeorm_1.ManyToOne(() => User_1.User, user => user.user1ToUser2, { primary: true }),
+    typeorm_1.ManyToOne(() => User_1.User, user => user.friends),
     typeorm_1.JoinColumn({ name: "friendone" }),
     __metadata("design:type", User_1.User)
 ], Friends.prototype, "user1", void 0);
 __decorate([
-    typeorm_1.ManyToOne(() => User_1.User, user => user.user2ToUser1, { primary: true }),
+    typeorm_1.ManyToOne(() => User_1.User, user => user.friendsInverse),
     typeorm_1.JoinColumn({ name: "friendtwo" }),
     __metadata("design:type", User_1.User)
 ], Friends.prototype, "user2", void 0);

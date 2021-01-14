@@ -1,22 +1,22 @@
-import {Entity, CreateDateColumn, ManyToOne, PrimaryColumn, JoinColumn} from "typeorm";
+import {Entity, CreateDateColumn, ManyToOne, PrimaryColumn, JoinColumn, BaseEntity} from "typeorm";
 import {User} from "./User"
 
 @Entity("friends")
-export class Friends {
+export class Friends extends BaseEntity {
     @PrimaryColumn()
-    friendOne: number;
+    friendOne!: number;
 
     @PrimaryColumn()
-    friendTwo: number;
+    friendTwo!: number;
 
     @CreateDateColumn()
     dateAdded: Date;
 
-    @ManyToOne(() => User, user => user.user1ToUser2, { primary: true })
+    @ManyToOne(() => User, user => user.friends)
     @JoinColumn({ name: "friendone" })
     user1: User;
 
-    @ManyToOne(() => User, user => user.user2ToUser1, { primary: true })
+    @ManyToOne(() => User, user => user.friendsInverse)
     @JoinColumn({ name: "friendtwo" })
     user2: User;
 

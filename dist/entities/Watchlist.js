@@ -9,29 +9,24 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Movie = void 0;
+exports.Watchlist = void 0;
 const typeorm_1 = require("typeorm");
-const Review_1 = require("./Review");
-let Movie = class Movie extends typeorm_1.BaseEntity {
+let Watchlist = class Watchlist extends typeorm_1.BaseEntity {
 };
 __decorate([
-    typeorm_1.PrimaryGeneratedColumn(),
+    typeorm_1.PrimaryColumn(),
     __metadata("design:type", Number)
-], Movie.prototype, "id", void 0);
+], Watchlist.prototype, "userId", void 0);
 __decorate([
-    typeorm_1.Column(),
-    __metadata("design:type", String)
-], Movie.prototype, "title", void 0);
-__decorate([
-    typeorm_1.Column("real", { nullable: true }),
+    typeorm_1.PrimaryColumn(),
     __metadata("design:type", Number)
-], Movie.prototype, "userScore", void 0);
+], Watchlist.prototype, "movieId", void 0);
 __decorate([
-    typeorm_1.OneToMany(() => Review_1.Review, review => review.movie),
-    __metadata("design:type", Array)
-], Movie.prototype, "reviews", void 0);
-Movie = __decorate([
-    typeorm_1.Entity()
-], Movie);
-exports.Movie = Movie;
-//# sourceMappingURL=Movie.js.map
+    typeorm_1.CreateDateColumn(),
+    __metadata("design:type", Date)
+], Watchlist.prototype, "dateAdded", void 0);
+Watchlist = __decorate([
+    typeorm_1.Entity("watchlist")
+], Watchlist);
+exports.Watchlist = Watchlist;
+//# sourceMappingURL=Watchlist.js.map

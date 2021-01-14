@@ -1,12 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, BaseEntity } from "typeorm";
 import { Friends } from "./Friends";
+import { Review } from "./Review";
 
 @Entity("user")
-export class User {
+export class User extends BaseEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column({ unique: true, type: "varchar", length: "100"})
+    @Column({ unique: true, type: "varchar", length: "50"})
     username!: string;
 
     @Column()
@@ -18,10 +19,10 @@ export class User {
     @Column()
     salt!: string;
 
-    @Column({type: "varchar", length: "50"})
+    @Column({ nullable: true, type: "varchar", length: "50"})
     firstName: string;
 
-    @Column({type: "varchar", length: "50"})
+    @Column({ nullable: true, type: "varchar", length: "50"})
     lastName: string
 
     @CreateDateColumn()
@@ -31,8 +32,14 @@ export class User {
     updatedAt: Date;
 
     @OneToMany(() => Friends, friends => friends.user2)
-    user1ToUser2: Friends[];
+    friends: Friends[];
 
     @OneToMany(() => Friends, friends => friends.user1)
-    user2ToUser1: Friends[];
+    friendsInverse: Friends[];
+
+    @OneToMany(() => Review, review => review.user)
+    reviews: Review[];
+
+    
+
 }

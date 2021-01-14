@@ -12,14 +12,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = void 0;
 const typeorm_1 = require("typeorm");
 const Friends_1 = require("./Friends");
-let User = class User {
+const Review_1 = require("./Review");
+let User = class User extends typeorm_1.BaseEntity {
 };
 __decorate([
     typeorm_1.PrimaryGeneratedColumn(),
     __metadata("design:type", Number)
 ], User.prototype, "id", void 0);
 __decorate([
-    typeorm_1.Column({ unique: true, type: "varchar", length: "100" }),
+    typeorm_1.Column({ unique: true, type: "varchar", length: "50" }),
     __metadata("design:type", String)
 ], User.prototype, "username", void 0);
 __decorate([
@@ -35,11 +36,11 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "salt", void 0);
 __decorate([
-    typeorm_1.Column({ type: "varchar", length: "50" }),
+    typeorm_1.Column({ nullable: true, type: "varchar", length: "50" }),
     __metadata("design:type", String)
 ], User.prototype, "firstName", void 0);
 __decorate([
-    typeorm_1.Column({ type: "varchar", length: "50" }),
+    typeorm_1.Column({ nullable: true, type: "varchar", length: "50" }),
     __metadata("design:type", String)
 ], User.prototype, "lastName", void 0);
 __decorate([
@@ -53,11 +54,15 @@ __decorate([
 __decorate([
     typeorm_1.OneToMany(() => Friends_1.Friends, friends => friends.user2),
     __metadata("design:type", Array)
-], User.prototype, "user1ToUser2", void 0);
+], User.prototype, "friends", void 0);
 __decorate([
     typeorm_1.OneToMany(() => Friends_1.Friends, friends => friends.user1),
     __metadata("design:type", Array)
-], User.prototype, "user2ToUser1", void 0);
+], User.prototype, "friendsInverse", void 0);
+__decorate([
+    typeorm_1.OneToMany(() => Review_1.Review, review => review.user),
+    __metadata("design:type", Array)
+], User.prototype, "reviews", void 0);
 User = __decorate([
     typeorm_1.Entity("user")
 ], User);

@@ -1,13 +1,19 @@
-import { Column, Entity } from "typeorm";
+import { BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Review } from "./Review";
 
 @Entity()
-export class Movie {
-    @Column()
-    title: string;
+export class Movie extends BaseEntity {
+    //Change to normal column
+    @PrimaryGeneratedColumn()
+    id: number;
 
     @Column()
-    body: string;
+    title!: string;
 
-    @Column()
-    score: number;
+    @Column("real", {nullable: true})
+    userScore: number;
+
+    @OneToMany(() => Review, review => review.movie)
+    reviews: Review[];
+
 }

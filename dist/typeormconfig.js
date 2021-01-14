@@ -4,6 +4,6 @@ exports.dbConfig = void 0;
 exports.dbConfig = {
     database: "movieclub",
     username: "postgres",
-    password: "e327pk9m",
+    password: "e327pk8m",
 };
 //# sourceMappingURL=typeormconfig.js.map

@@ -11,14 +11,24 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Review = void 0;
 const typeorm_1 = require("typeorm");
-let Review = class Review {
+const User_1 = require("./User");
+const Movie_1 = require("./Movie");
+let Review = class Review extends typeorm_1.BaseEntity {
 };
 __decorate([
-    typeorm_1.Column({ type: "varchar", length: "100" }),
+    typeorm_1.PrimaryColumn(),
+    __metadata("design:type", Number)
+], Review.prototype, "userId", void 0);
+__decorate([
+    typeorm_1.PrimaryColumn(),
+    __metadata("design:type", Number)
+], Review.prototype, "movieId", void 0);
+__decorate([
+    typeorm_1.Column({ type: "varchar", length: "100", nullable: true }),
     __metadata("design:type", String)
 ], Review.prototype, "title", void 0);
 __decorate([
-    typeorm_1.Column({ type: "text" }),
+    typeorm_1.Column({ type: "text", nullable: true }),
     __metadata("design:type", String)
 ], Review.prototype, "body", void 0);
 __decorate([
@@ -33,6 +43,20 @@ __decorate([
     typeorm_1.UpdateDateColumn(),
     __metadata("design:type", Date)
 ], Review.prototype, "updatedAt", void 0);
+__decorate([
+    typeorm_1.ManyToOne(() => User_1.User, user => user.reviews, {
+        primary: true
+    }),
+    typeorm_1.JoinColumn({ name: "userId" }),
+    __metadata("design:type", User_1.User)
+], Review.prototype, "user", void 0);
+__decorate([
+    typeorm_1.ManyToOne(() => Movie_1.Movie, movie => movie.reviews, {
+        primary: true
+    }),
+    typeorm_1.JoinColumn({ name: "movieId" }),
+    __metadata("design:type", User_1.User)
+], Review.prototype, "movie", void 0);
 Review = __decorate([
     typeorm_1.Entity(),
     typeorm_1.Check(`"score" >= 0 AND "score" <= 10`)
