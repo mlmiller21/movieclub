@@ -14,6 +14,7 @@ const typeorm_1 = require("typeorm");
 const Friends_1 = require("./Friends");
 const Review_1 = require("./Review");
 const Watchlist_1 = require("./Watchlist");
+const Favourites_1 = require("./Favourites");
 let User = class User extends typeorm_1.BaseEntity {
 };
 __decorate([
@@ -67,7 +68,11 @@ __decorate([
 __decorate([
     typeorm_1.OneToMany(() => Watchlist_1.Watchlist, watchlist => watchlist.user),
     __metadata("design:type", Array)
-], User.prototype, "movieConnection", void 0);
+], User.prototype, "watchlistConnection", void 0);
+__decorate([
+    typeorm_1.OneToMany(() => Favourites_1.Favourites, Favourites => Favourites.user),
+    __metadata("design:type", Array)
+], User.prototype, "favouritesConnection", void 0);
 User = __decorate([
     typeorm_1.Entity("user")
 ], User);

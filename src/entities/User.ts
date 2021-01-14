@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 import { Friends } from "./Friends";
 import { Review } from "./Review";
 import { Watchlist } from "./Watchlist";
+import { Favourites } from "./Favourites";
 
 @Entity("user")
 export class User extends BaseEntity {
@@ -42,7 +43,10 @@ export class User extends BaseEntity {
     reviews: Review[];
 
     @OneToMany(() => Watchlist, watchlist => watchlist.user)
-    movieConnection: Watchlist[];
+    watchlistConnection: Watchlist[];
+
+    @OneToMany(() => Favourites, Favourites => Favourites.user)
+    favouritesConnection: Favourites[];
 
     
 

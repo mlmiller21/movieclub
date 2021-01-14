@@ -2,8 +2,8 @@ import {Entity, CreateDateColumn, ManyToOne, PrimaryColumn, JoinColumn, BaseEnti
 import {User} from "./User";
 import {Movie} from "./Movie";
 
-@Entity("watchlist")
-export class Watchlist extends BaseEntity {
+@Entity("favourites")
+export class Favourites extends BaseEntity {
     @PrimaryColumn()
     userId!: number;
 
@@ -13,13 +13,13 @@ export class Watchlist extends BaseEntity {
     @CreateDateColumn()
     dateAdded: Date;
 
-    @ManyToOne(() => User, user => user.watchlistConnection, {
+    @ManyToOne(() => User, user => user.favouritesConnection, {
         primary: true
     })
     @JoinColumn({ name: "userId" })
     user: User
 
-    @ManyToOne(() => Movie, movie => movie.watchlistConnection, {
+    @ManyToOne(() => Movie, movie => movie.favouritesConnection, {
         primary: true
     })
     @JoinColumn({ name: "movieId" })
