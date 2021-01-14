@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Movie = void 0;
 const typeorm_1 = require("typeorm");
 const Review_1 = require("./Review");
+const Watchlist_1 = require("./Watchlist");
 let Movie = class Movie extends typeorm_1.BaseEntity {
 };
 __decorate([
@@ -30,6 +31,10 @@ __decorate([
     typeorm_1.OneToMany(() => Review_1.Review, review => review.movie),
     __metadata("design:type", Array)
 ], Movie.prototype, "reviews", void 0);
+__decorate([
+    typeorm_1.OneToMany(() => Watchlist_1.Watchlist, watchlist => watchlist.movie),
+    __metadata("design:type", Array)
+], Movie.prototype, "userConnection", void 0);
 Movie = __decorate([
     typeorm_1.Entity()
 ], Movie);

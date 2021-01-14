@@ -13,6 +13,7 @@ exports.User = void 0;
 const typeorm_1 = require("typeorm");
 const Friends_1 = require("./Friends");
 const Review_1 = require("./Review");
+const Watchlist_1 = require("./Watchlist");
 let User = class User extends typeorm_1.BaseEntity {
 };
 __decorate([
@@ -63,6 +64,10 @@ __decorate([
     typeorm_1.OneToMany(() => Review_1.Review, review => review.user),
     __metadata("design:type", Array)
 ], User.prototype, "reviews", void 0);
+__decorate([
+    typeorm_1.OneToMany(() => Watchlist_1.Watchlist, watchlist => watchlist.user),
+    __metadata("design:type", Array)
+], User.prototype, "movieConnection", void 0);
 User = __decorate([
     typeorm_1.Entity("user")
 ], User);

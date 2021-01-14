@@ -1,5 +1,6 @@
 import { BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Review } from "./Review";
+import { Watchlist } from "./Watchlist";
 
 @Entity()
 export class Movie extends BaseEntity {
@@ -15,5 +16,8 @@ export class Movie extends BaseEntity {
 
     @OneToMany(() => Review, review => review.movie)
     reviews: Review[];
+
+    @OneToMany(() => Watchlist, watchlist => watchlist.movie)
+    userConnection: Watchlist[];
 
 }

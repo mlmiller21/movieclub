@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, BaseEntity } from "typeorm";
 import { Friends } from "./Friends";
 import { Review } from "./Review";
+import { Watchlist } from "./Watchlist";
 
 @Entity("user")
 export class User extends BaseEntity {
@@ -39,6 +40,9 @@ export class User extends BaseEntity {
 
     @OneToMany(() => Review, review => review.user)
     reviews: Review[];
+
+    @OneToMany(() => Watchlist, watchlist => watchlist.user)
+    movieConnection: Watchlist[];
 
     
 
