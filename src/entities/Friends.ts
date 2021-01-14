@@ -13,11 +13,11 @@ export class Friends extends BaseEntity {
     dateAdded: Date;
 
     @ManyToOne(() => User, user => user.friends)
-    @JoinColumn({ name: "friendone" })
+    @JoinColumn({ name: "friendOne" })
     user1: User;
 
     @ManyToOne(() => User, user => user.friendsInverse)
-    @JoinColumn({ name: "friendtwo" })
+    @JoinColumn({ name: "friendTwo" })
     user2: User;
 
 }

@@ -28,12 +28,12 @@ __decorate([
 ], Friends.prototype, "dateAdded", void 0);
 __decorate([
     typeorm_1.ManyToOne(() => User_1.User, user => user.friends),
-    typeorm_1.JoinColumn({ name: "friendone" }),
+    typeorm_1.JoinColumn({ name: "friendOne" }),
     __metadata("design:type", User_1.User)
 ], Friends.prototype, "user1", void 0);
 __decorate([
     typeorm_1.ManyToOne(() => User_1.User, user => user.friendsInverse),
-    typeorm_1.JoinColumn({ name: "friendtwo" }),
+    typeorm_1.JoinColumn({ name: "friendTwo" }),
     __metadata("design:type", User_1.User)
 ], Friends.prototype, "user2", void 0);
 Friends = __decorate([
