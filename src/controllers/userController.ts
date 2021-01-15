@@ -25,4 +25,4 @@ let createUser: (userCreation: UserNamePassword) => UserResponse = function(user
             }
         ]
     }
-)
+}
