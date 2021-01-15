@@ -1,1 +1,5 @@
+# typeorm username/pw/db
 .typeormconfig.ts
+
+/dist
+/node_modules
