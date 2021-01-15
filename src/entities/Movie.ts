@@ -1,12 +1,11 @@
-import { BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, Column, Entity, OneToMany, PrimaryColumn } from "typeorm";
 import { Review } from "./Review";
 import { Watchlist } from "./Watchlist";
 import { Favourites } from "./Favourites";
 
 @Entity()
 export class Movie extends BaseEntity {
-    //Change to normal column
-    @PrimaryGeneratedColumn()
+    @PrimaryColumn()
     id: number;
 
     @Column()

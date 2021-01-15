@@ -29,7 +29,8 @@ __decorate([
 ], Watchlist.prototype, "dateAdded", void 0);
 __decorate([
     typeorm_1.ManyToOne(() => User_1.User, user => user.watchlistConnection, {
-        primary: true
+        primary: true,
+        onDelete: "CASCADE"
     }),
     typeorm_1.JoinColumn({ name: "userId" }),
     __metadata("design:type", User_1.User)

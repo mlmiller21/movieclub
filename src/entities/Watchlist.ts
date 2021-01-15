@@ -14,7 +14,8 @@ export class Watchlist extends BaseEntity {
     dateAdded: Date;
 
     @ManyToOne(() => User, user => user.watchlistConnection, {
-        primary: true
+        primary: true,
+        onDelete: "CASCADE"
     })
     @JoinColumn({ name: "userId" })
     user: User

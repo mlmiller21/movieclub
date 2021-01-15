@@ -17,7 +17,7 @@ const Favourites_1 = require("./Favourites");
 let Movie = class Movie extends typeorm_1.BaseEntity {
 };
 __decorate([
-    typeorm_1.PrimaryGeneratedColumn(),
+    typeorm_1.PrimaryColumn(),
     __metadata("design:type", Number)
 ], Movie.prototype, "id", void 0);
 __decorate([

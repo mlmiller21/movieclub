@@ -1,5 +1,5 @@
 import "reflect-metadata"
-import { createConnection } from "typeorm";
+import { Connection, createConnection } from "typeorm";
 import { dbConfig } from "./typeormconfig";
 import { Friends } from "./entities/Friends";
 import { User } from "./entities/User";
@@ -8,7 +8,7 @@ import { Review } from "./entities/Review";
 import { Watchlist } from "./entities/Watchlist";
 import { Favourites } from "./entities/Favourites";
 
-export const connection = createConnection({
+export const connection: Promise<Connection> = createConnection({
     type: "postgres",
     database: dbConfig.database,
     username: dbConfig.username,
