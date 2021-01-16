@@ -4,6 +4,7 @@ import { validateRegister } from "../utils/validateRegister";
 import { UserNamePassword } from "../interfaces/UsernamePassword";
 import { UserResponse } from "../interfaces/UserResponse";
 import { UserLogin } from "../interfaces/UserLogin";
+import { fieldError } from "../utils/fieldError";
 
 
 export const createUser: (userCreation: UserNamePassword) => Promise<UserResponse | null> = async function(userCreation: UserNamePassword): Promise<UserResponse | null> {
@@ -12,14 +13,32 @@ export const createUser: (userCreation: UserNamePassword) => Promise<UserRespons
     if (errors){
         return errors;
     }
+    //create hashed bcrypt password
+    const password = await createPassword(userCreation.password);
+
+    let user: User | undefined;
+    try {
+        user = await User.create({username: userCreation.username.toLowerCase(), password: password, email: userCreation.email}).save();
+        console.log(user);
+    } 
+    catch (err){
+        console.log(err);
+        if (err.code === "23505"){
+            if(err.detail.includes("username")){
+                return {errors: [
+                    fieldError("username", "username already exists")
+                ]};
+            }
+            if(err.detail.includes("email")){
+                return {errors: [
+                    fieldError("email", "email already exists")
+                ]};
+            }
+            console.log("23505");
+        }
+    }
     
-    const password = createPassword(userCreation.password);
-    console.log(password);
-    console.log("test");
-
-
-    //insert username into db in lower case
-    return null;
+    return { user };
     
 }
 

@@ -35,7 +35,7 @@ const main: any = async () => {
 
     app.post('/register', async (req: Request, res: Response) => {
         let {username, password, email} = req.body;
-        const user = createUser({username, password, email});
+        const user = await createUser({username, password, email});
         console.log(user);
         
 
