@@ -1,6 +1,7 @@
 import { connection } from "./connection"
 import express, {Request, Response} from "express";
 import { User } from "./entities/User";
+import { createUser } from "./controllers/userController";
 
 const port = process.env.PORT || 3000;
 
@@ -34,7 +35,8 @@ const main: any = async () => {
 
     app.post('/register', async (req: Request, res: Response) => {
         let {username, password, email} = req.body;
-        
+        const user = createUser({username, password, email});
+        console.log(user);
         
 
         res.json(req.body);

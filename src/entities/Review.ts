@@ -1,9 +1,8 @@
-import { Column, CreateDateColumn, Entity, UpdateDateColumn, Check, ManyToOne, BaseEntity, PrimaryColumn, JoinColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, UpdateDateColumn, ManyToOne, BaseEntity, PrimaryColumn, JoinColumn } from "typeorm";
 import { User } from "./User";
 import { Movie } from "./Movie";
 
 @Entity()
-@Check(`"score" >= 0 AND "score" <= 10`)
 export class Review extends BaseEntity {
     @PrimaryColumn()
     userId!: number
