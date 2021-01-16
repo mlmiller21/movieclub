@@ -1,32 +1,33 @@
 import bcrypt from "bcrypt";
 
-interface Password {
-    hashedPasswordSalt: string
+//Create a salted and hashed password to store in the database
+export const createPassword: (password: string) => Promise<string> = function (password: string): Promise<string> {
+    return new Promise((res, rej) => {
+        const workFactor = 12;
+        //bcrypt encodes in base64
+        //bcrypt prepends a cryptographically secure random salt to the hash
+        bcrypt.genSalt(workFactor, function(err, salt) {
+            if (err){
+                rej(err);
+            }
+            bcrypt.hash(password, salt, function(err, hash){
+                if (err){
+                    rej(err);
+                }
+                res(hash);
+            })
+        })
+    })
 }
 
-export const createPassword: (userPassword: string) => Password = function (userPassword: string): Password {
-    //generate the salt with a work factor of 12
-    const workFactor = 12;
-    
-
-    //bcrypt encodes in base64
-    //bcrypt prepends a cryptographically secure random salt to the hash
-
-    //generate the hash of the password
-        //salt should be at least 16 char long
-        //Salt should be encoded as hexadecimal or base64
-    //combine salt and password (concat)
-    //hash the combined password with salt
-    //hashedPasswordSalt: "pw", salt: "salt"
-    //store the pw with hashedpasswoedsalt and store salt with salt
-    
-    
-    
-
-    
-}
-
-export const comparePassword: (userPassword: string, dbPassword: string) => boolean = function (userPassword: string, dbPassword: string): boolean {
-    
-    return true;
+//compare user password with hashed salted password 
+export const comparePassword: (userPassword: string, dbPassword: string) => Promise<boolean> = function (userPassword: string, dbPassword: string): Promise<boolean> {
+    return new Promise((res, rej) => {  
+        bcrypt.compare(userPassword, dbPassword, function(err, result){
+            if (err){
+                rej(err);
+            }
+            res(result);
+        })
+    })
 }

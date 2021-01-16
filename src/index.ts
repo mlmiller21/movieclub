@@ -11,7 +11,7 @@ const main: any = async () => {
     const app: express.Application = express();
 
     try {
-        await User.create({username: "Martin", password: "Password", email: "email", salt: "salt"}).save();
+        await User.create({username: "Martin", password: "Password", email: "email"}).save();
     } catch (err) {
         console.log(err);
     }

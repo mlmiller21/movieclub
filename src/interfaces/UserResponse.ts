@@ -1,6 +1,6 @@
 import { User } from "../entities/User";
 
-interface Error {
+export interface Error {
     field: string,
     message: string
 }

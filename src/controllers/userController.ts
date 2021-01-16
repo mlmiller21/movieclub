@@ -1,9 +1,9 @@
-import { User } from "src/entities/User";
+import { User } from "../entities/User";
 import { createPassword, comparePassword } from "../utils/password";
 import { validateRegister } from "../utils/validateRegister";
-import { UserNamePassword } from "../types/UsernamePassword";
-import { UserResponse } from "../types/UserResponse";
-import { UserLogin } from "src/types/UserLogin";
+import { UserNamePassword } from "../interfaces/UsernamePassword";
+import { UserResponse } from "../interfaces/UserResponse";
+import { UserLogin } from "../interfaces/UserLogin";
 
 
 export const createUser: (userCreation: UserNamePassword) => Promise<UserResponse | null> = async function(userCreation: UserNamePassword): Promise<UserResponse | null> {
@@ -14,9 +14,8 @@ export const createUser: (userCreation: UserNamePassword) => Promise<UserRespons
     }
     
     const password = createPassword(userCreation.password);
-
-    let user: User = User.create({username: userCreation.username, password: password.hashedPasswordSalt, salt:password.salt});
-
+    console.log(password);
+    console.log("test");
 
 
     //insert username into db in lower case
