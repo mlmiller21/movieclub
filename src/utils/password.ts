@@ -21,7 +21,7 @@ export const createPassword: (password: string) => Promise<string> = function (p
 }
 
 //compare user password with hashed salted password 
-export const comparePassword: (userPassword: string, dbPassword: string) => Promise<boolean> = function (userPassword: string, dbPassword: string): Promise<boolean> {
+export const comparePassword: (userPassword: string, dbPassword: string) => Promise<boolean> = async function (userPassword: string, dbPassword: string): Promise<boolean> {
     return new Promise((res, rej) => {  
         bcrypt.compare(userPassword, dbPassword, function(err, result){
             if (err){

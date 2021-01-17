@@ -1,11 +1,11 @@
-import { UserNamePassword } from "../interfaces/UsernamePassword";
+import { UserRegister } from "../interfaces/UserRegister";
 import { UserResponse } from "../interfaces/UserResponse";
 import { validateUsername } from "./validateUsername";
 import { validatePassword } from "./validatePassword";
 import { validateEmail } from "./validateEmail";
 
 //Validation of registartion
-export const validateRegister: (userCreation: UserNamePassword) => UserResponse | null = function(userCreation: UserNamePassword): UserResponse | null {
+export const validateRegister: (userCreation: UserRegister) => UserResponse | null = function(userCreation: UserRegister): UserResponse | null {
     const errorUsername = validateUsername(userCreation.username);
     if (errorUsername){
         return errorUsername;
