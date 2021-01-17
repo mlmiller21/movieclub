@@ -7,6 +7,7 @@ import { Movie } from "./entities/Movie";
 import { Review } from "./entities/Review";
 import { Watchlist } from "./entities/Watchlist";
 import { Favourites } from "./entities/Favourites";
+import { ForgotPassword } from "./entities/ForgotPassword";
 
 export const connection: Promise<Connection> = createConnection({
     type: "postgres",
@@ -15,5 +16,5 @@ export const connection: Promise<Connection> = createConnection({
     password: dbConfig.password,
     logging: true,
     synchronize: true,
-    entities: [User, Friends, Movie, Review, Watchlist, Favourites]
+    entities: [User, Friends, Movie, Review, Watchlist, Favourites, ForgotPassword]
 });
