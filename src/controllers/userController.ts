@@ -6,7 +6,8 @@ import { validateLogin } from "../utils/validateLogin";
 import { UserRegister } from "../interfaces/UserRegister";
 import { UserResponse } from "../interfaces/UserResponse";
 import { UserLogin } from "../interfaces/UserLogin";
-import {Request, Response} from "express";
+import {Request, response, Response} from "express";
+import { COOKIE_NAME } from "../constants";
 
 
 //validate registration
@@ -83,6 +84,7 @@ export const login: (userLogin: UserLogin, req: Request) => Promise<UserResponse
     return (user as UserResponse);
 }
 
+//if logged in return user
 export const me: (req: Request) => Promise<UserResponse | null > = async function(req: Request): Promise<UserResponse | null> {
     if (!req.session.userId){
         return null;
@@ -90,3 +92,14 @@ export const me: (req: Request) => Promise<UserResponse | null > = async functio
     const user: any = await User.findOne({where: {id: req.session.userId}})
     return user;
 }
+
+export const logout: (req: Request, res: Response) => Promise<boolean> = async function(req: Request, res: Response): Promise<boolean> {
+    return new Promise(resolve => req.session.destroy((err) => {
+        res.clearCookie(COOKIE_NAME);
+        if (err){
+            resolve(false);
+        }
+        resolve(true);
+    }));
+}
+

@@ -1,11 +1,11 @@
 import { connection } from "./connection"
 import express, {Request, Response} from "express";
 import { User } from "./entities/User";
-import { createUser, login, me } from "./controllers/userController";
+import { createUser, login, logout, me } from "./controllers/userController";
 import redis from "ioredis";
 import connectRedis from "connect-redis";
 import session from "express-session";
-import { __prod__ } from "./constants";
+import { COOKIE_NAME, __prod__ } from "./constants";
 
 declare module "express-session" {
     interface Session {
@@ -34,7 +34,7 @@ const main: any = async () => {
     //
     app.use(
         session({
-            name: "Odin",
+            name: COOKIE_NAME,
             store: new redisStore({
                 client: redisClient,
                 disableTouch: true
@@ -78,6 +78,12 @@ const main: any = async () => {
 
         res.json(req.body);
 
+    })
+
+    app.post('/logout', async (req: Request, res: Response) => {
+        const valid = await logout(req, res);
+        console.log("logged out!");
+        res.json(req.body);
     })
 
     app.get('/me', async (req: Request, res: Response) => {
