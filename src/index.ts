@@ -1,7 +1,7 @@
 import { connection } from "./connection"
 import express, {Request, Response} from "express";
 import { User } from "./entities/User";
-import { createUser, login } from "./controllers/userController";
+import { createUser, login, me } from "./controllers/userController";
 import redis from "ioredis";
 import connectRedis from "connect-redis";
 import session from "express-session";
@@ -80,7 +80,11 @@ const main: any = async () => {
 
     })
 
-    
+    app.get('/me', async (req: Request, res: Response) => {
+        const user = await me(req);
+        console.log(user);
+        res.json(req.body);
+    })
 
     app.listen(port, () => {
         console.log(`server started on http://localhost:${port}`);

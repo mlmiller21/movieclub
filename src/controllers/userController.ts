@@ -82,3 +82,11 @@ export const login: (userLogin: UserLogin, req: Request) => Promise<UserResponse
     
     return (user as UserResponse);
 }
+
+export const me: (req: Request) => Promise<UserResponse | null > = async function(req: Request): Promise<UserResponse | null> {
+    if (!req.session.userId){
+        return null;
+    }
+    const user: any = await User.findOne({where: {id: req.session.userId}})
+    return user;
+}
