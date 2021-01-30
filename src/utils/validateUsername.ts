@@ -2,7 +2,11 @@ import { usernameRe } from "../regex"
 import { UserResponse } from "../interfaces/UserResponse";
 import { fieldError } from "../utils/fieldError";
 
-//validate username
+/**
+ * validate username
+ * @param {string} username 
+ * @returns {UserResponse | null} return UserResponse if error, null otherwise
+ */
 export const validateUsername: (username: string) => UserResponse | null = function(username: string): UserResponse | null {
     //validate user
     //username can't be empty

@@ -4,7 +4,11 @@ import { validateUsername } from "./validateUsername";
 import { validatePassword } from "./validatePassword";
 import { validateEmail } from "./validateEmail";
 
-//Validation of registartion
+/**
+ * validate username, password, and email for a registration validation
+ * @param {UserRegister} userCreation consists of username, password, and email
+ * @returns {UserResponse} error if invalid, null otherwise
+ */
 export const validateRegister: (userCreation: UserRegister) => UserResponse | null = function(userCreation: UserRegister): UserResponse | null {
     const errorUsername = validateUsername(userCreation.username);
     if (errorUsername){
@@ -19,19 +23,4 @@ export const validateRegister: (userCreation: UserRegister) => UserResponse | nu
         return errorEmail;
     }
     return null;
-
-    /**
-     * 
-    The email address is correct.
-    The application can successfully send emails to it.
-    The user has access to the mailbox.
-
-    The links that are sent to users to prove ownership should contain a token that is:
-
-    At least 32 characters long.
-    Generated using a secure source of randomness.
-    Single use.
-    Time limited (e.g, expiring after eight hours).
-
-     */
 }

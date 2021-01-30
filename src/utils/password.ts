@@ -1,6 +1,11 @@
 import bcrypt from "bcrypt";
 
-//Create a salted and hashed password to store in the database
+/**
+ * Create a salted and hashed password to store in the database
+ * utilizes a work factor of 12 for the salt
+ * @param {string} password 
+ * @returns {Promise<string>} hashed password if successful, error otherwise
+ */
 export const createPassword: (password: string) => Promise<string> = function (password: string): Promise<string> {
     return new Promise((res, rej) => {
         const workFactor = 12;
@@ -20,7 +25,13 @@ export const createPassword: (password: string) => Promise<string> = function (p
     })
 }
 
-//compare user password with hashed salted password 
+
+/**
+ * compare user password with hashed salted password 
+ * @param {string} userPassword user inputted password
+ * @param {string} dbPassword password stored in db
+ * @returns {Promise<boolean>} true if equivalent, false otherwise
+ */
 export const comparePassword: (userPassword: string, dbPassword: string) => Promise<boolean> = async function (userPassword: string, dbPassword: string): Promise<boolean> {
     return new Promise((res, rej) => {  
         bcrypt.compare(userPassword, dbPassword, function(err, result){

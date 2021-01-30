@@ -3,6 +3,14 @@ import { UserResponse } from "../interfaces/UserResponse";
 import { fieldError } from "../utils/fieldError";
 
 //validate email
+/**
+ * validate email using the following attributes:
+ *  - total length, length of local part
+ *  - tested against a loose regex, not fully compliant with RFC-822
+ *    just checks if @ exists with proper characters in local and domain
+ * @param {string} email 
+ * @returns {UserResponse | null} return UserResponse if error, null otherwise
+ */
 export const validateEmail: (email: string) => UserResponse | null = function(email: string): UserResponse | null {
     if (email.length < 3){
         return {

@@ -3,7 +3,6 @@ import { ForgotPassword } from "../entities/ForgotPassword";
 import { createPassword, comparePassword } from "../utils/password";
 import { validateRegister } from "../utils/validateRegister";
 import { fieldError } from "../utils/fieldError";
-import { validateLogin } from "../utils/validateLogin";
 import { validatePassword } from "../utils/validatePassword";
 import { UserRegister } from "../interfaces/UserRegister";
 import { UserResponse } from "../interfaces/UserResponse";
@@ -14,13 +13,18 @@ import { UserProfileEdit } from "../interfaces/UserEdit";
 import { validateEmail } from "../utils/validateEmail";
 import { sendEmailForgotPassword } from "../utils/email";
 import { v4 } from "uuid";
-import { Redis } from "ioredis";
 import { getConnection } from "typeorm";
+import { validateUsername } from "../utils/validateUsername";
 
 
-//validate registration
+/**
+ * Create a new User, username is saved in lowercase but displayed based on how user inputs it
+ * @param userCreation {UserRegister} username, password, and email inputted by user
+ * @param {Request} req object to set user id in cookie, logging user in
+ * @returns {Promise<UserResponse>} returns user if creation is successful, error otherwise
+ */
 export const createUser: (userCreation: UserRegister, req: Request) => Promise<UserResponse> = async function(userCreation: UserRegister, req: Request): Promise<UserResponse> {
-    //Validate user - password, and email
+    //Validate user - username, password, and email
     const errors = validateRegister(userCreation);
     if (errors){
         return errors;
@@ -51,25 +55,24 @@ export const createUser: (userCreation: UserRegister, req: Request) => Promise<U
     //regenerate to change ssid and prevent session fixation
     return await new Promise((res) => req.session.regenerate((err) => {
         req.session.userId = user!.id;
-        res({user: user});
+        res({user});
     }));
 }
 
-//validate login
+/**
+ * Validate user login, user can log in with either username or email
+ * @param {UserLogin} userLogin (username or email) and password
+ * @param {Request} req Request object to set user id in cookie, logging user in
+ * @returns {Promise<UserResponse>} user if valid, error otherwise 
+ */
 export const login: (userLogin: UserLogin, req: Request) => Promise<UserResponse> = async function(userLogin: UserLogin, req: Request): Promise<UserResponse> {
-
-    //validate login - username or email, and password
-    const errors = validateLogin(userLogin);
-    if (errors){
-        return errors;
-    }
-    //get user from db
+    //get user from db 
     const user = await User.findOne({where: 
         userLogin.usernameOrEmail.includes("@") 
         ? {email: userLogin.usernameOrEmail} 
         : {username: userLogin.usernameOrEmail}}
         );
-    //username or email already exist
+    //username or email don't exist
     if (!user){
         if (userLogin.usernameOrEmail.includes("@")){
             return {errors: [
@@ -82,6 +85,7 @@ export const login: (userLogin: UserLogin, req: Request) => Promise<UserResponse
             ]};
         }
     }
+    //Compare the user password with the password in the db
     const success = await comparePassword(userLogin.password, user.password);
     if (!success){
         return {errors: [
@@ -96,19 +100,25 @@ export const login: (userLogin: UserLogin, req: Request) => Promise<UserResponse
     }));
 }
 
-//if logged in return user
-export const me: (req: Request) => Promise<UserResponse | null > = async function(req: Request): Promise<UserResponse | null> {
-    if (!req.session.userId){
-        return null;
-    }
+/**
+ * used for debugging
+ * @param {Request} req Request object containing user id in cookie
+ * @returns {UserResponse} user
+ */
+export const me: (req: Request) => Promise<UserResponse > = async function(req: Request): Promise<UserResponse> {
     const user: any = await User.findOne({where: {id: req.session.userId}})
-    return user;
+    return {user};
 }
 
-//logout
+/**
+ * Logout the user by clearing the cookie from redis and from the response
+ * @param {Request} req Request object to destroy cookie from Redis
+ * @param {Response} res Response object to clear cookie from
+ * @returns {boolean} true if successful, false otherwise
+ */
 export const logout: (req: Request, res: Response) => Promise<boolean> = async function(req: Request, res: Response): Promise<boolean> {
     //req.session.destroy utilizes a callback, wait for callback by making use of promise
-    //clear cookie from redis
+    //clear cookie from redis 
     return await new Promise(resolve => req.session.destroy((err) => {
         //clear cookie from response
         res.clearCookie(COOKIE_NAME);
@@ -119,20 +129,34 @@ export const logout: (req: Request, res: Response) => Promise<boolean> = async f
     }));
 }
 
+/**
+ * Edit user properties such as firstname, last name, etc
+ * @param {UserProfileEdit} res user properties to edit
+ * @param {Request} req Cookie containing user id
+ * @returns {Promise<UserResponse | null>} error if invalid, null otherwise
+ */
 export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<UserResponse | null> = async function(userEdit: UserProfileEdit, req: Request): Promise<UserResponse | null> {
     
+    const error: UserResponse = {errors: []};
     if (userEdit.firstName.length > 50 || userEdit.lastName.length > 50){
-        return {errors: [
-            fieldError("name", "name too long")
-        ]};
+        error.errors!.push(fieldError("name", "name too long"));
     }
-    
+
+    if(error.errors!.length > 0){
+        return error;
+    }
+    //no errors, update user 
     await User.update({id: req.session.userId}, {firstName: userEdit.firstName, lastName: userEdit.lastName});
 
     return null;
 }
 
-export const forgotPassword: (email: string, redis: Redis) => Promise<UserResponse | null> = async function (email: string, redis: Redis): Promise<UserResponse | null> {
+/**
+ * Email a link to user to reset password
+ * @param {string} email user's email
+ * @returns {Promise<UserResponse>} user if valid, error otherwise
+ */
+export const forgotPassword: (email: string) => Promise<UserResponse> = async function (email: string): Promise<UserResponse> {
     const error = validateEmail(email);
     if (error){
         return error;
@@ -152,7 +176,7 @@ export const forgotPassword: (email: string, redis: Redis) => Promise<UserRespon
     let expire = new Date();
     expire.setHours(expire.getHours() + 2);
 
-    let entry: ForgotPassword | undefined;
+    let entry: ForgotPassword;
     try {
         entry = await ForgotPassword.create({token: token, userid: user.id, expires: expire}).save();
     }
@@ -166,12 +190,18 @@ export const forgotPassword: (email: string, redis: Redis) => Promise<UserRespon
         }
     }
 
-    await sendEmailForgotPassword(email, `<a href="http://localhost:3000/change-password-email/${token}">Click here to change your password</a>`);
+    await sendEmailForgotPassword(email, `<a href="http://localhost:3000/change-password-email?token=${token}">Click here to change your password</a>`);
 
-    return null;
+    return {user};
 }
 
-export const changePassword: (password: string, token: string) => Promise<UserResponse | null> = async function (password: string, token: string): Promise<UserResponse | null> {
+/**
+ * Route for a user that has reset the password using the emailed link
+ * @param {string} password new password
+ * @param {string} token uuid token that relates a user to a forgotten password generated link 
+ * @returns {Promise<UserResponse>} user if valid, error otherwise
+ */
+export const changePasswordEmail: (password: string, token: string) => Promise<UserResponse> = async function (password: string, token: string): Promise<UserResponse> {
     const error = validatePassword(password);
     if (error){
         return error;
@@ -182,6 +212,7 @@ export const changePassword: (password: string, token: string) => Promise<UserRe
 
     await getConnection().createQueryBuilder().delete().from(ForgotPassword).where('expires <= :currentDate', {currentDate: new Date()}).execute();
 
+    //Get row in table that contains the same token
     const entry = await ForgotPassword.findOne({where: {token}});
     //Either token was never generated or the token expired
     if (!entry){
@@ -190,19 +221,74 @@ export const changePassword: (password: string, token: string) => Promise<UserRe
         ]};
     }
 
+    //Obtain the user
     const user = await User.findOne({where: {id: entry.userid}});
 
-    if (!entry){
+    if (!user){
         return {errors: [
             fieldError("token", "User no longer exists")
         ]};
     }
-
-    const hashedPassword = await createPassword(password);
-
+    let hashedPassword: string;
+    try {
+        hashedPassword = await createPassword(password);
+    }
+    catch(err){
+        return {errors: [
+            fieldError("password", "unknown error creating password")
+        ]};
+    }
+    //update to new password
     await User.update({id: user!.id}, {password: hashedPassword});
+    //delete token in database
+    await ForgotPassword.delete({userid: user!.id})
 
-    await ForgotPassword.delete({});
+    return {user};
+}
 
-    return null;
+/**
+ * Change password of user
+ * @param {string} password new password
+ * @param {Request} req Request object containing user id
+ * @returns {Promise<UserResponse>} user if valid, error otherwise
+ */
+export const changePassword: (password: string, req: Request) => Promise<UserResponse> = async function(password: string, req: Request): Promise<UserResponse> {
+    const error = validatePassword(password);
+    if(error){
+        return error;
+    }
+    //Obtain the user
+    const user = await User.findOne({where: {id: req.session.userId}});
+
+    if (!user){
+        return {errors: [
+            fieldError("token", "User no longer exists")
+        ]};
+    }
+    const hashedPassword = await createPassword(password);
+    await User.update({id: req.session.userId}, {password: hashedPassword});
+    return {user};
+}
+
+/**
+ * Change username of user
+ * @param {string} username new username
+ * @param {Request} req Request object containing user id
+ * @returns {Promise<UserResponse>} user if valid, false otherwise
+ */
+export const changeUsername: (username: string, req: Request) => Promise<UserResponse> = async function(username: string, req: Request): Promise<UserResponse> {
+    const error = validateUsername(username);
+    if (error){
+        return error;
+    }
+    //Obtain the user
+    const user = await User.findOne({where: {id: req.session.userId}});
+
+    if (!user){
+        return {errors: [
+            fieldError("token", "User no longer exists")
+        ]};
+    }
+    await User.update({id: req.session.userId}, {username: username});
+    return {user};
 }

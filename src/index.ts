@@ -1,11 +1,10 @@
 import { connection } from "./connection"
 import express, {Request, Response} from "express";
-import { User } from "./entities/User";
-import { changePassword, createUser, editProfile, forgotPassword, login, logout, me } from "./controllers/userController";
 import redis from "ioredis";
 import connectRedis from "connect-redis";
 import session from "express-session";
 import { COOKIE_NAME, __prod__ } from "./constants";
+import user from "./routes/user";
 
 declare module "express-session" {
     interface Session {
@@ -31,7 +30,6 @@ const main: any = async () => {
     const redisStore: connectRedis.RedisStore = connectRedis(session);
     const redisClient = new redis();
 
-    //
     app.use(
         session({
             name: COOKIE_NAME,
@@ -51,68 +49,83 @@ const main: any = async () => {
         })
     )
 
-    app.get('/', (req: Request, res: Response) => {
-        res.send("hello world");
-    })
-
-    app.get('/register', (req: Request, res: Response) => {
-        res.send("register get");
-    })
-
-    app.post('/register', async (req: Request, res: Response) => {
-        const {username, password, email} = req.body;
-        const user = await createUser({username, password, email}, req);
-
-        console.log(user);
-
-        res.json(req.body);
-    })
-
-    app.post('/login', async (req: Request, res: Response) => {
-        const {usernameOrEmail, password} = req.body;
-        const user = await login({usernameOrEmail, password}, req);
-        console.log("session");
-        console.log(req.session);
-
-        console.log(user);
-
-        res.json(req.body);
+    app.use('/user', user);
+    
+    /**
+     * paginate
+     * get reviews for a movie
+     * filter by 
+     *  date (newest, oldest)
+     *  score (highest, lowest)
+     * default to date newest
+     */
+    app.get('/reviews/:movieid', async (req: Request, res: Response) => {
 
     })
 
-    app.post('/logout', async (req: Request, res: Response) => {
-        const valid = await logout(req, res);
-        console.log("logged out!");
-        res.json(req.body);
-    })
-
-    app.post('/editProfile', async (req: Request, res: Response) => {
-        const {firstName, lastName} = req.body;
-        const error = await editProfile({firstName, lastName}, req)
-        console.log("edited!");
-        res.json(req.body);
-    })
-
-    app.post('/forgotPassword', async (req: Request, res: Response) => {
-        const {email} = req.body;
-        const error = await forgotPassword(email, redisClient);
-        console.log("done!");
-        res.json(req.body);
-    })
-
-    app.post('/change-password-email', async (req: Request, res: Response) => {
-        const {password, token} = req.body;
-        const error = await changePassword(password, token);
-        console.log("done!");
-        console.log(error);
-        res.json(req.body);
+    /**
+     * get reviews by a user
+     * filter by 
+     *  date (newest, oldest)
+     *  score (highest, lowest)
+     * default to date newest
+     */
+    app.get('/userreviews/:userid', async (req: Request, res: Response) => {
 
     })
 
-    app.get('/me', async (req: Request, res: Response) => {
-        const user = await me(req);
-        console.log(user);
-        res.json(req.body);
+    /**
+     * Search for a specific user
+     * make use of debounce in frontend (maybe 400ms?)
+     */
+    app.get('/searchuser', async (req: Request, res: Response) => {
+
+    })
+
+    /**
+     * Create new review for a movie
+     */
+    app.post('/review/:movieid', async (req: Request, res: Response) => {
+
+    })
+
+    /**
+     * Get a specific user's watchlist
+     * TODO: Only accessed by user or user's friends if permissions set to private
+     */
+    app.get('/watchlist/:userid', async (req: Request, res: Response) => {
+
+    })
+
+    /**
+     * Add a movie to a user's watchlist
+     * Only accessible by that same user
+     */
+    app.post('/watchlist/:userid', async (req: Request, res: Response) => {
+
+    })
+    
+    /**
+     * Get a specific user's favourites
+     * TODO: Only accessed by user or user's friends if permissions set to private
+     */
+    app.get('/favourites/:userid', async (req: Request, res: Response) => {
+
+    })
+
+    /**
+     * Add a movie to a user's favourites
+     * Only accessible by that same user
+     */
+    app.post('/favourites/:userid', async (req: Request, res: Response) => {
+
+    })
+
+    /**
+     * Add a friend by pk
+     */
+    app.post('/addfriend/:userid', async (req: Request, res: Response) => {
+
     })
 
     app.listen(port, () => {
