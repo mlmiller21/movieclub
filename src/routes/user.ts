@@ -42,34 +42,34 @@ router.post('/change-password', isLoggedIn, async (req: Request, res: Response) 
     const {password} = req.body;
     const error = await changePassword(password, req);
     if (error.errors){
-        res.json(error);
+        res.status(400).json(error);
     }
-    res.json({passChanged: true})
+    res.status(200).end();
 })
 
-router.post('/change-username', isLoggedIn, async (req: Request, res: Response) => {
+router.put('/change-username', isLoggedIn, async (req: Request, res: Response) => {
     const {username} = req.body;
     const error = await changeUsername(username, req);
     if (error.errors){
-        res.json(error);
+        res.status(400).json(error);
     }
-    res.json({userChanged: true})
+    res.status(204).end();
 })
 
 
 router.get('/me', isLoggedIn, async (req: Request, res: Response) => {
     const user = await me(req);
-    res.json(user);
+    res.status(200).json(user);
 })
 
 router.post('/forgotPassword', async (req: Request, res: Response) => {
     const {email} = req.body;
     const user = await forgotPassword(email);
     if (user.errors){
-        res.json(user.errors);
+        res.status(400).json(user.errors);
     }
     
-    res.json({sent: true});
+    res.status(200).end();
 })
 
 router.post('/change-password-email', async (req: Request, res: Response) => {
@@ -77,10 +77,10 @@ router.post('/change-password-email', async (req: Request, res: Response) => {
     const token: string = req.query.token as string;
     const error = await changePasswordEmail(password, token);
     if (error.errors){
-        res.json(error.errors);
+        res.status(400).json(error.errors);
     }
 
-    res.json({email: true});
+    res.status(200).end();
 })
 
 export default router;
