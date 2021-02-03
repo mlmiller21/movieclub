@@ -1,9 +1,5 @@
 import { User } from "../entities/User";
-
-export interface Error {
-    field: string,
-    message: string
-}
+import { Error } from "./Error";
 
 export interface UserResponse {
     errors?: Error[],

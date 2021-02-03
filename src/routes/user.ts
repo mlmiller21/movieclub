@@ -1,35 +1,10 @@
 import express, {Request, Response} from "express";
 import {isLoggedIn} from "../middleware/isLoggedIn";
-import { changePassword, createUser, editProfile, forgotPassword, login, logout, me, changePasswordEmail, changeUsername } from "../controllers/userController";
+import { changePassword, editProfile, changeUsername, changeEmail } from "../controllers/userController";
 
 const router = express.Router();
 
-router.post('/register', async (req: Request, res: Response) => {
-    const {username, password, email} = req.body;
-    const user = await createUser({username, password, email}, req);6
-
-    if (user.errors){
-        res.status(400).json({user});
-    }
-    res.status(201);
-})
-
-router.post('/login', async (req: Request, res: Response) => {
-    const {usernameOrEmail, password} = req.body;
-    const user = await login({usernameOrEmail, password}, req);
-
-    if (user.errors){
-        res.status(400).json({user});
-    }
-    res.status(200).end();
-})
-
-router.post('/logout', async (req: Request, res: Response) => {
-    const valid = await logout(req, res);
-    res.status(valid ? 200: 400).end();
-})
-
-router.put('/editProfile', isLoggedIn, async (req: Request, res: Response) => {
+router.patch(':userid/editProfile/', isLoggedIn, async (req: Request, res: Response) => {
     const {firstName, lastName} = req.body;
     const error = await editProfile({firstName, lastName}, req)
     if (error){
@@ -47,7 +22,7 @@ router.post('/change-password', isLoggedIn, async (req: Request, res: Response) 
     res.status(200).end();
 })
 
-router.put('/change-username', isLoggedIn, async (req: Request, res: Response) => {
+router.patch('/change-username', isLoggedIn, async (req: Request, res: Response) => {
     const {username} = req.body;
     const error = await changeUsername(username, req);
     if (error.errors){
@@ -56,31 +31,13 @@ router.put('/change-username', isLoggedIn, async (req: Request, res: Response) =
     res.status(204).end();
 })
 
-
-router.get('/me', isLoggedIn, async (req: Request, res: Response) => {
-    const user = await me(req);
-    res.status(200).json(user);
-})
-
-router.post('/forgotPassword', async (req: Request, res: Response) => {
+router.patch('/change-email', isLoggedIn, async (req: Request, res: Response) => {
     const {email} = req.body;
-    const user = await forgotPassword(email);
-    if (user.errors){
-        res.status(400).json(user.errors);
-    }
-    
-    res.status(200).end();
-})
-
-router.post('/change-password-email', async (req: Request, res: Response) => {
-    const {password} = req.body;
-    const token: string = req.query.token as string;
-    const error = await changePasswordEmail(password, token);
+    const error = await changeEmail(email, req);
     if (error.errors){
-        res.status(400).json(error.errors);
+        res.status(400).json(error);
     }
-
-    res.status(200).end();
+    res.status(204).end();
 })
 
 export default router;

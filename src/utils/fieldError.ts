@@ -1,4 +1,4 @@
-import { Error } from "../interfaces/UserResponse";
+import { Error } from "../interfaces/Error";
 
 /**
  * Error factory

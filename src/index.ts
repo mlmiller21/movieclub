@@ -5,6 +5,7 @@ import connectRedis from "connect-redis";
 import session from "express-session";
 import { COOKIE_NAME, __prod__ } from "./constants";
 import user from "./routes/user";
+import auth from "./routes/auth";
 
 declare module "express-session" {
     interface Session {
@@ -49,6 +50,7 @@ const main: any = async () => {
         })
     )
 
+    app.use('/auth', auth);
     app.use('/user', user);
     
     /**
