@@ -2,18 +2,19 @@ import { User } from "../entities/User";
 
 import { UserResponse } from "../interfaces/UserResponse";
 import { UserProfileEdit } from "../interfaces/UserEdit";
+import { UserGeneral } from "src/interfaces/UserGeneral";
 
-import { createPassword } from "../utils/password";
+import { createPassword, comparePassword } from "../utils/password";
 import { fieldError } from "../utils/fieldError";
 import { validatePassword } from "../utils/validatePassword";
-import { validateEmail } from "../utils/validateEmail";
-import { validateUsername } from "../utils/validateUsername";
+import { validateUserGeneral } from "../utils/validateUserGeneral";
 
 import { COOKIE_NAME } from "../constants";
 
 import { Request, Response } from "express";
 import { v4 } from "uuid";
 import { getConnection } from "typeorm";
+
 
 /**
  * @description Edit user properties such as firstname, last name, etc
@@ -31,8 +32,64 @@ export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<U
     if(error.errors!.length > 0){
         return error;
     }
-    //no errors, update user 
-    await User.update({id: req.session.userId}, {...userEdit});
+    //no validation errors, update user 
+    try {
+        await User.update({id: req.session.userId}, {...userEdit});
+    }
+    catch (err){
+        return {errors: [
+            fieldError("user", "User doesn't exist")
+        ]}
+    }
+
+    return null;
+}
+
+/**
+ * @description Edit username and email, requires user to enter password to update
+ * @param {UserGeneral} userGeneral username, email, and password
+ * @param {Request} req Cookie containing user id
+ * @returns {Promise<UserResponse | null>} error if invalid, null otherwise
+ */
+export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Promise<UserResponse | null> = async function(userGeneral: UserGeneral, req: Request): Promise<UserResponse | null> {
+    // validate input
+    const error = validateUserGeneral(userGeneral);
+    if (error){
+        return error;
+    }
+    //obtain the user
+    const user: any = await User.findOne({where: {id: req.session.userId}})
+    //username or email don't exist
+    if (!user){
+        return {errors: [
+            fieldError("user", "user doesn't exist")
+        ]};
+    }
+    //Compare the user password with the password in the db
+    const success = await comparePassword(userGeneral.password, user.password);
+    if (!success){
+        return {errors: [
+            fieldError("password", "incorrect password")
+        ]};
+    }
+    //everything good, update user
+    try {
+        User.update({id: user.id}, {username: userGeneral.username, email: userGeneral.email});
+    }
+    catch(err) {
+        if (err.code === "23505"){
+            if (err.detail.includes("username")){
+                return {errors: [
+                    fieldError("username", "username already exists")
+                ]};
+            }
+            if (err.detail.includes("email")){
+                return {errors: [
+                    fieldError("email", "email already exists")
+                ]};
+            }
+        }
+    }
 
     return null;
 }
@@ -43,59 +100,19 @@ export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<U
  * @param {Request} req Request object containing user id
  * @returns {Promise<UserResponse>} user if valid, error otherwise
  */
-export const changePassword: (password: string, req: Request) => Promise<UserResponse> = async function(password: string, req: Request): Promise<UserResponse> {
+export const changePassword: (password: string, req: Request) => Promise<UserResponse | null> = async function(password: string, req: Request): Promise<UserResponse | null> {
     const error = validatePassword(password);
     if(error){
         return error;
     }
-    //Obtain the user
-    const user = await User.findOne({where: {id: req.session.userId}});
-
-    if (!user){
-        return {errors: [
-            fieldError("token", "User no longer exists")
-        ]};
-    }
     const hashedPassword = await createPassword(password);
-    await User.update({id: req.session.userId}, {password: hashedPassword});
-    return {user};
-}
-
-/**
- * @description Change username of user
- * @param {string} username new username
- * @param {Request} req Request object containing user id
- * @returns {Promise<UserResponse>} user if valid, false otherwise
- */
-export const changeUsername: (username: string, req: Request) => Promise<UserResponse> = async function(username: string, req: Request): Promise<UserResponse> {
-    const error = validateUsername(username);
-    if (error){
-        return error;
+    try {
+        await User.update({id: req.session.userId}, {password: hashedPassword});
     }
-    //Obtain the user
-    const user = await User.findOne({where: {id: req.session.userId}});
-
-    if (!user){
+    catch(err){
         return {errors: [
-            fieldError("token", "User no longer exists")
+            fieldError("user", "user doesn't exist")
         ]};
     }
-    await User.update({id: req.session.userId}, {username});
-    return {user};
-}
-
-export const changeEmail: (email: string, req: Request) => Promise<UserResponse> = async function(email: string, req: Request): Promise<UserResponse> {
-    const error = validateEmail(email);
-    if (error){
-        return error;
-    }
-    //Obtain the user
-    const user = await User.findOne({where: {id: req.session.userId}});
-    if (!user){
-        return {errors: [
-            fieldError("token", "User no longer exists")
-        ]};
-    }
-    await User.update({id: req.session.userId}, {email});
-    return {user};
+    return null;
 }

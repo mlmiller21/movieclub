@@ -6,7 +6,7 @@ import { UserResponse } from "../interfaces/UserResponse";
 import { UserLogin } from "../interfaces/UserLogin";
 
 import { createPassword, comparePassword } from "../utils/password";
-import { validateRegister } from "../utils/validateRegister";
+import { validateUserGeneral } from "../utils/validateUserGeneral";
 import { fieldError } from "../utils/fieldError";
 import { validatePassword } from "../utils/validatePassword";
 import { validateEmail } from "../utils/validateEmail";
@@ -28,7 +28,7 @@ import { getConnection } from "typeorm";
  */
 export const createUser: (userCreation: UserRegister, req: Request) => Promise<UserResponse> = async function(userCreation: UserRegister, req: Request): Promise<UserResponse> {
     //Validate user - username, password, and email
-    const errors = validateRegister(userCreation);
+    const errors = validateUserGeneral(userCreation);
     if (errors){
         return errors;
     }
