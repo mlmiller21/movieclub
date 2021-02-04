@@ -59,7 +59,7 @@ export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Prom
     }
     //obtain the user
     const user: any = await User.findOne({where: {id: req.session.userId}})
-    //username or email don't exist
+    //user doesn't exist
     if (!user){
         return {errors: [
             fieldError("user", "user doesn't exist")
@@ -74,7 +74,7 @@ export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Prom
     }
     //everything good, update user
     try {
-        User.update({id: user.id}, {username: userGeneral.username, email: userGeneral.email});
+        await User.update({id: user.id}, {username: userGeneral.username, email: userGeneral.email});
     }
     catch(err) {
         if (err.code === "23505"){
@@ -95,17 +95,33 @@ export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Prom
 }
 
 /**
- * @description Change password of user
+ * @description Change password of user, first make sure oldpassword is correct then update to new password
  * @param {string} password new password
  * @param {Request} req Request object containing user id
  * @returns {Promise<UserResponse>} user if valid, error otherwise
  */
-export const changePassword: (password: string, req: Request) => Promise<UserResponse | null> = async function(password: string, req: Request): Promise<UserResponse | null> {
-    const error = validatePassword(password);
+export const changePassword: (oldPassword: string, newPassword: string, req: Request) => Promise<UserResponse | null> = async function(oldPassword: string, newPassword: string, req: Request): Promise<UserResponse | null> {
+    //obtain the user
+    const user: any = await User.findOne({where: {id: req.session.userId}})
+    //user doesn't exist
+    if (!user){
+        return {errors: [
+            fieldError("user", "user doesn't exist")
+        ]};
+    }
+    //Compare the user password with the password in the db
+    const success = await comparePassword(oldPassword, user.password);
+    if (!success){
+        return {errors: [
+            fieldError("password", "incorrect password")
+        ]};
+    }
+    //validate the new password
+    const error = validatePassword(newPassword);
     if(error){
         return error;
     }
-    const hashedPassword = await createPassword(password);
+    const hashedPassword = await createPassword(newPassword);
     try {
         await User.update({id: req.session.userId}, {password: hashedPassword});
     }

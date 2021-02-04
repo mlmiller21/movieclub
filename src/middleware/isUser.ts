@@ -7,7 +7,7 @@ import { NextFunction, Request, Response } from "express";
  * @param {NextFunction} next 
  */
 export const isUser: (req: Request, res: Response, next: NextFunction) => void = function (req: Request, res: Response, next: NextFunction) {
-    const userid: number = parseInt(req.query.userid as string);
+    const userid: number = parseInt(req.params.userid as string);
     if (req.session.userId !== userid){
         res.status(401).send({isUser: false})
     }
