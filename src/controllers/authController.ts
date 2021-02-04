@@ -108,7 +108,7 @@ export const login: (userLogin: UserLogin, req: Request) => Promise<UserResponse
  * @param {Request} req Request object containing user id in cookie
  * @returns {UserResponse} user
  */
-export const me: (req: Request) => Promise<UserResponse > = async function(req: Request): Promise<UserResponse> {
+export const me: (req: Request) => Promise<UserResponse> = async function(req: Request): Promise<UserResponse> {
     const user: any = await User.findOne({where: {id: req.session.userId}})
     return {user};
 }

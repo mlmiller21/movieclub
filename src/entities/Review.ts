@@ -1,13 +1,16 @@
-import { Column, CreateDateColumn, Entity, UpdateDateColumn, ManyToOne, BaseEntity, PrimaryColumn, JoinColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, UpdateDateColumn, ManyToOne, BaseEntity, JoinColumn, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./User";
 import { Movie } from "./Movie";
 
 @Entity()
 export class Review extends BaseEntity {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn()
+    id!: number
+
+    @Column()
     userId!: number
 
-    @PrimaryColumn()
+    @Column()
     movieId!: number
 
     @Column({type: "varchar", length: "100", nullable: true})

@@ -1,7 +1,7 @@
 import { Error } from "./Error";
-import { PostedReview } from "./PostedReview";
+import { PostedUserReview } from "./PostedUserReview";
 
 export interface UserReviewsResponse {
     errors?: Error[],
-    reviews?: PostedReview[]
+    reviews?: PostedUserReview[]
 }
