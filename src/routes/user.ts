@@ -36,4 +36,56 @@ router.post('/:userid/change-password', userAuth, async (req: Request, res: Resp
     res.status(200).json({success: true});
 })
 
+//TODO: Only accessed by user or user's friends if permissions set to private
+
+/**
+     * get reviews by a user
+     * filter by 
+     *  date (asc, desc)
+     *  score (asc, desc)
+     * default to date newest
+     * add pagination
+     * ?filter=date&sort=asc&page=1
+     */
+router.get('/:userid/reviews', async (req: Request, res: Response) => {
+    console.log(req.query);
+    res.end();
+})
+
+/**
+     * Get a specific user's watchlist
+     * TODO: Only accessed by user or user's friends if permissions set to private
+     */
+router.get('/:userid/watchlist', async (req: Request, res: Response) => {
+    console.log(req.query);
+    res.end();
+})
+
+/**
+     * Add a movie to a user's watchlist
+     * Only accessible by that same user
+     */
+router.post('/:userid/watchlist', async (req: Request, res: Response) => {
+    console.log(req.query);
+    res.end();
+})
+
+/**
+     * Get a specific user's favourites
+     * TODO: Only accessed by user or user's friends if permissions set to private
+     */
+router.get('/:userid/favourites', async (req: Request, res: Response) => {
+    console.log(req.query);
+    res.end();
+})
+
+/**
+     * Add a movie to a user's favourites
+     * Only accessible by that same user
+     */
+router.post('/:userid/favourites', async (req: Request, res: Response) => {
+    console.log(req.query);
+    res.end();
+})
+
 export default router;
