@@ -53,73 +53,15 @@ const main: any = async () => {
     app.use('/auth', auth);
     app.use('/user', user);
     
-    /**
-     * paginate
-     * get reviews for a movie
-     * filter by 
-     *  date (newest, oldest)
-     *  score (highest, lowest)
-     * default to date newest
-     */
-    app.get('/reviews/:movieid', async (req: Request, res: Response) => {
+    
 
-    })
-
-    /**
-     * get reviews by a user
-     * filter by 
-     *  date (newest, oldest)
-     *  score (highest, lowest)
-     * default to date newest
-     */
-    app.get('/userreviews/:userid', async (req: Request, res: Response) => {
-
-    })
-
+    
     /**
      * Search for a specific user
+     * Return a list of users?
      * make use of debounce in frontend (maybe 400ms?)
      */
     app.get('/searchuser', async (req: Request, res: Response) => {
-
-    })
-
-    /**
-     * Create new review for a movie
-     */
-    app.post('/review/:movieid', async (req: Request, res: Response) => {
-
-    })
-
-    /**
-     * Get a specific user's watchlist
-     * TODO: Only accessed by user or user's friends if permissions set to private
-     */
-    app.get('/watchlist/:userid', async (req: Request, res: Response) => {
-
-    })
-
-    /**
-     * Add a movie to a user's watchlist
-     * Only accessible by that same user
-     */
-    app.post('/watchlist/:userid', async (req: Request, res: Response) => {
-
-    })
-    
-    /**
-     * Get a specific user's favourites
-     * TODO: Only accessed by user or user's friends if permissions set to private
-     */
-    app.get('/favourites/:userid', async (req: Request, res: Response) => {
-
-    })
-
-    /**
-     * Add a movie to a user's favourites
-     * Only accessible by that same user
-     */
-    app.post('/favourites/:userid', async (req: Request, res: Response) => {
 
     })
 
