@@ -1,11 +1,13 @@
 import { connection } from "./connection"
-import express, {Request, Response} from "express";
+import express, {NextFunction, Request, Response} from "express";
 import redis from "ioredis";
 import connectRedis from "connect-redis";
 import session from "express-session";
 import { COOKIE_NAME, __prod__ } from "./constants";
 import user from "./routes/user";
 import auth from "./routes/auth";
+import movie from "./routes/movie";
+import { HttpError } from "./utils/CustomErrors";
 
 declare module "express-session" {
     interface Session {
@@ -52,9 +54,9 @@ const main: any = async () => {
 
     app.use('/auth', auth);
     app.use('/user', user);
+    app.use('/movie', movie);
     
     
-
     
     /**
      * Search for a specific user
@@ -71,6 +73,11 @@ const main: any = async () => {
     app.post('/addfriend/:userid', async (req: Request, res: Response) => {
 
     })
+
+    app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
+        res.status(400).json({err});
+        // This is error handler
+    });
 
     app.listen(port, () => {
         console.log(`server started on http://localhost:${port}`);

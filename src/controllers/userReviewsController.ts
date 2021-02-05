@@ -25,7 +25,6 @@ export const getUserReviews: (reviewFilter: ReviewFilter, req: Request) => Promi
     //maybe set permissions? -> has to be done in db, set permission onto user itself
     //just do a query in typeorm
     //getrepository 
-    const reviews = await getConnection().getRepository(Review).findAndCount({where: })
-
-
+    //const reviews = await getConnection().getRepository(Review).findAndCount({where: })
+    return {reviews: [{movieid: 1, score: 1, title: "", body: "", date: ""}]}
 }

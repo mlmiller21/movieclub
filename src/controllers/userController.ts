@@ -2,14 +2,14 @@ import { User } from "../entities/User";
 
 import { UserResponse } from "../interfaces/UserResponse";
 import { UserProfileEdit } from "../interfaces/UserEdit";
-import { UserGeneral } from "src/interfaces/UserGeneral";
+import { UserGeneral } from "../interfaces/UserGeneral";
+import { CustomError } from "../interfaces/CustomError";
 
 import { createPassword, comparePassword } from "../utils/password";
 import { fieldError } from "../utils/fieldError";
 import { validatePassword } from "../utils/validatePassword";
 import { validateUserGeneral } from "../utils/validateUserGeneral";
-
-import { COOKIE_NAME } from "../constants";
+import { HttpError } from "../utils/CustomErrors";
 
 import { Request, Response } from "express";
 import { v4 } from "uuid";
@@ -20,115 +20,113 @@ import { getConnection } from "typeorm";
  * @description Edit user properties such as firstname, last name, etc
  * @param {UserProfileEdit} res user properties to edit
  * @param {Request} req Cookie containing user id
- * @returns {Promise<UserResponse | null>} error if invalid, null otherwise
+ * @returns {Promise<UserResponse>} error if invalid, user otherwise
  */
-export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<UserResponse | null> = async function(userEdit: UserProfileEdit, req: Request): Promise<UserResponse | null> {
-    
-    const error: UserResponse = {errors: []};
+export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<UserResponse> = async function(userEdit: UserProfileEdit, req: Request): Promise<UserResponse> {
+    const errors: CustomError[] = [];
     if (userEdit.firstName.length > 50 || userEdit.lastName.length > 50){
-        error.errors!.push(fieldError("name", "name too long"));
+        errors.push(fieldError("name", "name too long"));
     }
 
-    if(error.errors!.length > 0){
-        return error;
+    if(errors.length > 0){
+        throw new HttpError(errors);
     }
     //no validation errors, update user 
+    let user: User | undefined;
     try {
-        await User.update({id: req.session.userId}, {...userEdit});
+        user = await getConnection()
+        .createQueryBuilder()
+        .update(User)
+        .set({...userEdit})
+        .where('id = :id', {id: req.session.userId})
+        .returning('*')
+        .execute()
+        .then((response) => response.raw[0]);
     }
     catch (err){
-        return {errors: [
-            fieldError("user", "User doesn't exist")
-        ]}
+        throw new HttpError([fieldError("user", "User doesn't exist")]);
     }
-
-    return null;
+    return {user}
 }
 
 /**
  * @description Edit username and email, requires user to enter password to update
  * @param {UserGeneral} userGeneral username, email, and password
  * @param {Request} req Cookie containing user id
- * @returns {Promise<UserResponse | null>} error if invalid, null otherwise
+ * @returns {Promise<UserResponse>} error if invalid, user otherwise
  */
-export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Promise<UserResponse | null> = async function(userGeneral: UserGeneral, req: Request): Promise<UserResponse | null> {
+export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Promise<UserResponse> = async function(userGeneral: UserGeneral, req: Request): Promise<UserResponse> {
     // validate input
-    const error = validateUserGeneral(userGeneral);
-    if (error){
-        return error;
+    const errors = validateUserGeneral(userGeneral);
+    if (errors.length > 0){
+        throw new HttpError(errors);
     }
     //obtain the user
-    const user: any = await User.findOne({where: {id: req.session.userId}})
+    const user: User | undefined = await User.findOne({where: {id: req.session.userId}})
     //user doesn't exist
     if (!user){
-        return {errors: [
-            fieldError("user", "user doesn't exist")
-        ]};
+        throw new HttpError([fieldError("user", "user doesn't exist")]);
     }
     //Compare the user password with the password in the db
     const success = await comparePassword(userGeneral.password, user.password);
     if (!success){
-        return {errors: [
-            fieldError("password", "incorrect password")
-        ]};
+        throw new HttpError([fieldError("user", "user doesn't exist")]);
     }
     //everything good, update user
+    let userUpdate: User | undefined;
     try {
-        await User.update({id: user.id}, {username: userGeneral.username, email: userGeneral.email});
+        userUpdate = await getConnection()
+        .createQueryBuilder()
+        .update(User)
+        .set({username: userGeneral.username, email: userGeneral.email})
+        .where('id = :id', {id: req.session.userId})
+        .returning('*')
+        .execute()
+        .then((response) => response.raw[0]);
     }
     catch(err) {
         if (err.code === "23505"){
             if (err.detail.includes("username")){
-                return {errors: [
-                    fieldError("username", "username already exists")
-                ]};
+                throw new HttpError([fieldError("username", "username already exists")])
             }
             if (err.detail.includes("email")){
-                return {errors: [
-                    fieldError("email", "email already exists")
-                ]};
+                throw new HttpError([fieldError("email", "email already exists")])
             }
         }
     }
-
-    return null;
+    return {user: userUpdate}
 }
 
 /**
  * @description Change password of user, first make sure oldpassword is correct then update to new password
  * @param {string} password new password
  * @param {Request} req Request object containing user id
- * @returns {Promise<UserResponse>} user if valid, error otherwise
+ * @returns {Promise<void>} void if valid, error otherwise
  */
-export const changePassword: (oldPassword: string, newPassword: string, req: Request) => Promise<UserResponse | null> = async function(oldPassword: string, newPassword: string, req: Request): Promise<UserResponse | null> {
+export const changePassword: (oldPassword: string, newPassword: string, req: Request) => Promise<void> = async function(oldPassword: string, newPassword: string, req: Request): Promise<void> {
     //obtain the user
     const user: any = await User.findOne({where: {id: req.session.userId}})
     //user doesn't exist
     if (!user){
-        return {errors: [
-            fieldError("user", "user doesn't exist")
-        ]};
-    }
-    //Compare the user password with the password in the db
-    const success = await comparePassword(oldPassword, user.password);
-    if (!success){
-        return {errors: [
-            fieldError("password", "incorrect password")
-        ]};
+        throw new HttpError([fieldError("user", "user doesn't exist")]);
     }
     //validate the new password
     const error = validatePassword(newPassword);
     if(error){
-        return error;
+        throw new HttpError([error])
+    }
+
+    //Compare the user password with the password in the db
+    const success = await comparePassword(oldPassword, user.password);
+    if (!success){
+        throw new HttpError([fieldError("password", "incorrect password")])
     }
     const hashedPassword = await createPassword(newPassword);
+    console.log(hashedPassword);
     try {
         await User.update({id: req.session.userId}, {password: hashedPassword});
     }
     catch(err){
-        return {errors: [
-            fieldError("user", "user doesn't exist")
-        ]};
+        throw new HttpError([fieldError("Error", "Unknown Error")])
     }
-    return null;
 }

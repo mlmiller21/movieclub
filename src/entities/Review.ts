@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, UpdateDateColumn, ManyToOne, BaseEntity, JoinColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, UpdateDateColumn, ManyToOne, BaseEntity, PrimaryColumn, JoinColumn, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./User";
 import { Movie } from "./Movie";
 
@@ -21,6 +21,9 @@ export class Review extends BaseEntity {
 
     @Column({type: "smallint"})
     score!: number;
+
+    @Column({type: "boolean"})
+    spoilers: boolean;
 
     @CreateDateColumn()
     createdAt: Date;

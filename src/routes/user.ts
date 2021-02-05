@@ -1,4 +1,4 @@
-import express, {Request, Response} from "express";
+import express, {NextFunction, Request, Response} from "express";
 import {isLoggedIn} from "../middleware/isLoggedIn";
 import {isUser} from "../middleware/isUser";
 import { changePassword, editProfile, updateUserGeneral } from "../controllers/userController";
@@ -8,32 +8,41 @@ const router = express.Router();
 const userAuth = [isLoggedIn, isUser];
 
 //update user details
-router.patch('/:userid/editProfile', userAuth, async (req: Request, res: Response) => {
+router.patch('/:userid/editProfile', userAuth, async (req: Request, res: Response, next: NextFunction) => {
     const {firstName, lastName} = req.body;
-    const error = await editProfile({firstName, lastName}, req)
-    if (error){
-        res.status(400).json({success: false, error});
+    try{
+    const user = await editProfile({firstName, lastName}, req)
+    res.status(200).json({success: true, user});
+
     }
-    res.status(200).json({success: true});
+    catch(err){
+        next(err);
+    }
 })
 
 //update username and email, must enter password 
-router.post('/:userid/general', userAuth, async (req: Request, res: Response) => {
+router.post('/:userid/general', userAuth, async (req: Request, res: Response, next: NextFunction) => {
     const {username, email, password} = req.body;
-    const error = await updateUserGeneral({username, email, password}, req);
-    if (error){
-        res.status(400).json({success: false, error});
+    try {
+        const user = await updateUserGeneral({username, email, password}, req);
+        res.status(200).json({success: true, user});
     }
-    res.status(200).json({success: true});
+    catch(err){
+        next(err);
+    }
+    
 })
 
-router.post('/:userid/change-password', userAuth, async (req: Request, res: Response) => {
+router.post('/:userid/change-password', userAuth, async (req: Request, res: Response, next: NextFunction) => {
     const {oldPassword, newPassword} = req.body;
-    const error = await changePassword(oldPassword, newPassword, req);
-    if (error){
-        res.status(400).json({success: false, error});
+    try{
+        await changePassword(oldPassword, newPassword, req);
+        res.status(200).json({success: true});
     }
-    res.status(200).json({success: true});
+    catch(err){
+        next(err);
+    }
+    
 })
 
 /**
@@ -46,7 +55,7 @@ router.post('/:userid/change-password', userAuth, async (req: Request, res: Resp
  * ?filter=date&sort=asc&page=1
  */
 router.get('/:userid/reviews', userAuth, async (req: Request, res: Response) => {
-    const reviews = await getUserReviews()
+    //const reviews = await getUserReviews()
     console.log(req.query);
     res.end();
 })

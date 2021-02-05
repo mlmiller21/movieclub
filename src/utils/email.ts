@@ -5,7 +5,7 @@ export async function sendEmailForgotPassword(to: string, html: string) {
   // Generate test SMTP service account from ethereal.email
   // Only needed if you don't have a real mail account for testing
 
-  //let testAccount = await nodemailer.createTestAccount();
+  let testAccount = await nodemailer.createTestAccount();
 
   // create reusable transporter object using the default SMTP transport
   let transporter = nodemailer.createTransport({
@@ -13,8 +13,8 @@ export async function sendEmailForgotPassword(to: string, html: string) {
     port: 587,
     secure: false, // true for 465, false for other ports
     auth: {
-      user: "ellis.hauck37@ethereal.email", // generated ethereal user
-      pass: "jsUGjYJnkpMb5XnZeb", // generated ethereal password
+      user: testAccount.user,//"patricia.larson13@ethereal.email", // generated ethereal user
+      pass: testAccount.pass//"WNdjFAYNHwqudQ2DBt", // generated ethereal password
     },
   });
 
@@ -25,4 +25,10 @@ export async function sendEmailForgotPassword(to: string, html: string) {
     subject: "movieClub: Forgot Password Link", // Subject line
     html, // plain text body
   });
+
+  console.log(info);
+  console.log(info.messageId);
+  console.log(nodemailer.getTestMessageUrl(info));
+
+  console.log("email sent");
 }

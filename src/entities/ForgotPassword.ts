@@ -13,7 +13,10 @@ export class ForgotPassword extends BaseEntity {
     @Column({nullable: false, unique: true})
     userid: number;
 
-    @OneToOne(() => User, {nullable: false})
+    @OneToOne(() => User,{
+        cascade: true, 
+        onDelete: "CASCADE"
+    })
     @JoinColumn({name: "userid"})
     user: User;
 }

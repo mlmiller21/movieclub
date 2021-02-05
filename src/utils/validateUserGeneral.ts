@@ -1,26 +1,28 @@
-import { UserResponse } from "../interfaces/UserResponse";
+import { UserGeneral } from "../interfaces/UserGeneral";
+import {CustomError} from "../interfaces/CustomError";
+
 import { validateUsername } from "./validateUsername";
 import { validatePassword } from "./validatePassword";
 import { validateEmail } from "./validateEmail";
-import { UserGeneral } from "../interfaces/UserGeneral";
 
 /**
  * validate username, password, and email for a registration validation
  * @param {UserRegister} userCreation consists of username, password, and email
- * @returns {UserResponse} error if invalid, null otherwise
+ * @returns {CustomError[]} array of errors if multiple fields invalid, null otherwise
  */
-export const validateUserGeneral: (userCreation: UserGeneral) => UserResponse | null = function(userCreation: UserGeneral): UserResponse | null {
+export const validateUserGeneral: (userCreation: UserGeneral) => CustomError[] = function(userCreation: UserGeneral): CustomError[] {
+    let errors: CustomError[] = [];
     const errorUsername = validateUsername(userCreation.username);
     if (errorUsername){
-        return errorUsername;
+        errors.push(errorUsername);
     }
     const errorPassword = validatePassword(userCreation.password);
     if (errorPassword){
-        return errorPassword
+        errors.push(errorPassword);
     }
     const errorEmail = validateEmail(userCreation.email);
     if (errorEmail){
-        return errorEmail;
+        errors.push(errorEmail);
     }
-    return null;
+    return errors;
 }

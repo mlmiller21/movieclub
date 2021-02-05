@@ -6,5 +6,5 @@ export interface PostedUserReview {
     //title: title of review given by user
     title: string,
     body: string,
-    date: Date,
+    date: string
 }

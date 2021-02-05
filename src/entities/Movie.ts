@@ -6,12 +6,15 @@ import { Favourites } from "./Favourites";
 @Entity()
 export class Movie extends BaseEntity {
     @PrimaryColumn()
-    id: number;
+    id!: number;
 
     @Column()
     title!: string;
 
-    @Column("real", {nullable: true})
+    @Column({type: "smallint", default: 0})
+    reviewCount: number;
+
+    @Column({type: "real", nullable: true})
     userScore: number;
 
     @OneToMany(() => Review, review => review.movie)
