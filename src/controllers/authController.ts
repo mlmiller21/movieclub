@@ -137,8 +137,9 @@ export const logout: (req: Request, res: Response) => Promise<boolean> = async f
 /**
  * @description Email a link to user to reset password
  * @param {string} email user's email
+ * @returns {Promise<void>} void if successful, error otherwise
  */
-export const forgotPassword: (email: string) => Promise<boolean> = async function (email: string): Promise<boolean> {
+export const forgotPassword: (email: string) => Promise<void> = async function (email: string): Promise<void> {
     const error = validateEmail(email);
     if (error){
         throw new HttpError([error]);
@@ -146,30 +147,24 @@ export const forgotPassword: (email: string) => Promise<boolean> = async functio
     //check if email exists
     const user = await User.findOne({where: {email}});
     if (!user){
-        throw new HttpError([fieldError("email", "email doesn't exist")]);
+        throw new HttpError([fieldError("user", "User doesn't exist")]);
+    }
+
+    let entryCheck: ForgotPassword | undefined = await ForgotPassword.findOne({where: {userid: user.id}});
+    if (entryCheck){
+        throw new HttpError([fieldError("token", "A token has already been generated for that account")]);
     }
 
     //Generate uuid token
     const token = v4();
 
+    await sendEmailForgotPassword(email, `<a href="http://localhost:3000/change-password-email?token=${token}">Click here to change your password</a>`);
+
     //expires after 2 hours
     let expire = new Date();
     expire.setHours(expire.getHours() + 2);
 
-    // let entry: ForgotPassword;
-    // try {
-    //     entry = await ForgotPassword.create({token: token, userid: user.id, expires: expire}).save();
-    // }
-    // catch (err){
-    //     if (err.code === "23505"){
-    //         if (err.detail.includes("userid")){
-    //             throw new HttpError([fieldError("token", "A token has already been generated for that account")]);
-    //         }
-    //     }
-    // }
-    // This needs to be fixed
-    console.log(email);
-    await sendEmailForgotPassword(email, `<a href="http://localhost:3000/change-password-email?token=${token}">Click here to change your password</a>`);
+    await ForgotPassword.create({token: token, userid: user.id, expires: expire}).save(); 
 }
 
 /**

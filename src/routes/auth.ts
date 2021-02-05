@@ -51,7 +51,7 @@ router.post('/forgotPassword', async (req: Request, res: Response, next: NextFun
     const {email} = req.body;
     try{
         const userResponse = await forgotPassword(email);
-        res.status(userResponse ? 200: 400).json({success: userResponse ? true: false})
+        res.status(200).json({success: true})
     }
     catch(err){
         next(err);
@@ -60,16 +60,15 @@ router.post('/forgotPassword', async (req: Request, res: Response, next: NextFun
 })
 
 // Reset password with given token and password
-router.post('/change-password/:token', async (req: Request, res: Response, next: NextFunction) => {
-    const {password} = req.body;
-    const token: string = req.query.token as string;
+router.post('/change-password/', async (req: Request, res: Response, next: NextFunction) => {
+    const {password, token} = req.body;
     try{
     const user = await changePasswordEmail(password, token);
+        res.status(200).json({success: true, user});
     }
     catch(err){
         next(err)
     }
-    res.status(200).json({success: true});
 })
 
 export default router;
