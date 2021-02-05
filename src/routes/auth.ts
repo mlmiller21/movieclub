@@ -60,7 +60,7 @@ router.post('/forgotPassword', async (req: Request, res: Response, next: NextFun
 })
 
 // Reset password with given token and password
-router.post('/change-password/', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/change-password', async (req: Request, res: Response, next: NextFunction) => {
     const {password, token} = req.body;
     try{
     const user = await changePasswordEmail(password, token);
