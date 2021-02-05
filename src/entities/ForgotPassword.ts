@@ -1,4 +1,4 @@
-import {Entity, CreateDateColumn, PrimaryColumn, JoinColumn, BaseEntity, OneToOne, Column} from "typeorm";
+import {Entity, PrimaryColumn, JoinColumn, BaseEntity, OneToOne, Column} from "typeorm";
 import {User} from "./User";
 
 @Entity("forgotpassword")
@@ -14,7 +14,6 @@ export class ForgotPassword extends BaseEntity {
     userid: number;
 
     @OneToOne(() => User,{
-        cascade: true, 
         onDelete: "CASCADE"
     })
     @JoinColumn({name: "userid"})

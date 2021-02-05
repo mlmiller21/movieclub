@@ -15,10 +15,8 @@ const router = express.Router();
  */
 router.post('/:movieid/review', isLoggedIn, movieExists, async (req: Request, res: Response) => {
     const {score, title, body, spoiler} = req.body;
-    
-    const error = 
 
-    res.end();
+    res.json({...req.body})
     
 })
 
