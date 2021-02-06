@@ -14,7 +14,7 @@ export class Movie extends BaseEntity {
     @Column({type: "smallint", default: 0})
     reviewCount: number;
 
-    @Column({type: "real", nullable: true})
+    @Column({type: "real", nullable: true, default: 0})
     userScore: number;
 
     @OneToMany(() => Review, review => review.movie)

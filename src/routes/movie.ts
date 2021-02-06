@@ -20,7 +20,7 @@ router.post('/:movieid/review', isLoggedIn, movieExists, async (req: Request, re
 
     try{
         const review = await createReview({score, title, body, spoilers}, movieid, req);
-        res.status(200).json({success: true, review});
+        res.status(200).json({success: true, reviews: review.reviews});
     }
     catch(err){
         next(err);
