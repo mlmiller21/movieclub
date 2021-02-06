@@ -11,9 +11,8 @@ const userAuth = [isLoggedIn, isUser];
 router.patch('/:userid/editProfile', userAuth, async (req: Request, res: Response, next: NextFunction) => {
     const {firstName, lastName} = req.body;
     try{
-    const user = await editProfile({firstName, lastName}, req)
-    res.status(200).json({success: true, user});
-
+        const user = await editProfile({firstName, lastName}, req)
+        res.status(200).json({success: true, user: user.user});
     }
     catch(err){
         next(err);
@@ -25,7 +24,8 @@ router.post('/:userid/general', userAuth, async (req: Request, res: Response, ne
     const {username, email, password} = req.body;
     try {
         const user = await updateUserGeneral({username, email, password}, req);
-        res.status(200).json({success: true, user});
+        console.log(user);
+        res.status(200).json({success: true, user: user.user});
     }
     catch(err){
         next(err);

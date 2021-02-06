@@ -43,6 +43,7 @@ router.post('/logout', async (req: Request, res: Response, next: NextFunction) =
 // Obtain information for the current user
 router.get('/me', isLoggedIn, async (req: Request, res: Response) => {
     const user = await me(req);
+    console.log(user);
     res.status(200).json(user);
 })
 

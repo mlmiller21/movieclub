@@ -1,10 +1,8 @@
-export interface PostedUserReview {
-    //movieid: the pk of the movie according to TMDB api
-    movieid: number,
+export interface UserReview {
     //score: review score given by user
     score: number,
     //title: title of review given by user
     title: string,
     body: string,
-    date: string
+    spoilers: boolean
 }

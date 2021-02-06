@@ -24,6 +24,7 @@ export const movieExists: (req: Request, res: Response, next: NextFunction) => v
     const movieid = req.params.movieid;
     // first check if it's in db
     const movie: Movie | undefined = await Movie.findOne({where: {id: movieid}});
+    console.log(movie);
     //Movie doesn't exist, so create an entry in database
     if (!movie){
         let response: AxiosResponse;

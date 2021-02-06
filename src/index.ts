@@ -74,7 +74,7 @@ const main: any = async () => {
 
     })
 
-    app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
+    app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
         res.status(400).json({err});
         // This is error handler
     });

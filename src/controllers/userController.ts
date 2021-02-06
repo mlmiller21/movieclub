@@ -14,6 +14,7 @@ import { HttpError } from "../utils/CustomErrors";
 import { Request, Response } from "express";
 import { v4 } from "uuid";
 import { getConnection } from "typeorm";
+import { create } from "domain";
 
 
 /**
@@ -32,20 +33,20 @@ export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<U
         throw new HttpError(errors);
     }
     //no validation errors, update user 
-    let user: User | undefined;
-    try {
-        user = await getConnection()
-        .createQueryBuilder()
-        .update(User)
-        .set({...userEdit})
-        .where('id = :id', {id: req.session.userId})
-        .returning('*')
-        .execute()
-        .then((response) => response.raw[0]);
-    }
-    catch (err){
+
+    let user: User = await getConnection()
+    .createQueryBuilder()
+    .update(User)
+    .set({...userEdit})
+    .where('id = :id', {id: req.session.userId})
+    .returning('*')
+    .execute()
+    .then(res => res.raw[0]);
+
+    if (!user){
         throw new HttpError([fieldError("user", "User doesn't exist")]);
     }
+
     return {user}
 }
 
@@ -73,16 +74,8 @@ export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Prom
         throw new HttpError([fieldError("user", "user doesn't exist")]);
     }
     //everything good, update user
-    let userUpdate: User | undefined;
     try {
-        userUpdate = await getConnection()
-        .createQueryBuilder()
-        .update(User)
-        .set({username: userGeneral.username, email: userGeneral.email})
-        .where('id = :id', {id: req.session.userId})
-        .returning('*')
-        .execute()
-        .then((response) => response.raw[0]);
+        await User.update({id: req.session.userId}, {username: userGeneral.username, email: userGeneral.email})
     }
     catch(err) {
         if (err.code === "23505"){
@@ -94,7 +87,11 @@ export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Prom
             }
         }
     }
-    return {user: userUpdate}
+
+    user.username = userGeneral.username;
+    user.email = userGeneral.email;
+    
+    return {user}
 }
 
 /**
