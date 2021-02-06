@@ -5,7 +5,6 @@ import {findEmail,updateUserPassword, findLogginedInUser, findUserEmail, getExis
 import { createForgotPasswordToken, findForgotPasswordToken, deleteForgotPasswordToken, deleteExpiredForgotPasswordToken} from "../database/forgotPasswordToken";
 
 import { UserRegister } from "../interfaces/UserRegister";
-import { UserResponse } from "../interfaces/UserResponse";
 import { UserLogin } from "../interfaces/UserLogin";
 import { CustomError } from "../interfaces/CustomError";
 
@@ -27,7 +26,7 @@ import { v4 } from "uuid";
  * @description Create a new User, username is saved in lowercase but displayed based on how user inputs it
  * @param {UserRegister} userCreation username, password, and email inputted by user
  * @param {Request} req object to set user id in cookie, logging user in
- * @returns {Promise<UserResponse>} returns user if creation is successful, error otherwise
+ * @returns {Promise<User>} returns user if creation is successful, error otherwise
  */
 export const createUser: (userCreation: UserRegister, req: Request) => Promise<any> = async function(userCreation: UserRegister, req: Request): Promise<any> {
     //Validate user - username, password, and email
@@ -69,9 +68,9 @@ export const createUser: (userCreation: UserRegister, req: Request) => Promise<a
  * @description Validate user login, user can log in with either username or email
  * @param {UserLogin} userLogin (username or email) and password
  * @param {Request} req Request object to set user id in cookie, logging user in
- * @returns {Promise<UserResponse>} user if valid, error otherwise 
+ * @returns {Promise<User>} user if valid, error otherwise 
  */
-export const login: (userLogin: UserLogin, req: Request) => Promise<UserResponse> = async function(userLogin: UserLogin, req: Request): Promise<UserResponse> {
+export const login: (userLogin: UserLogin, req: Request) => Promise<User> = async function(userLogin: UserLogin, req: Request): Promise<User> {
     //get user from db
     const user: User | undefined = await findUserEmail(userLogin);
     //username or email don't exist
@@ -92,21 +91,21 @@ export const login: (userLogin: UserLogin, req: Request) => Promise<UserResponse
     //regenerate to change ssid and prevent session fixation
     return await new Promise((res) => req.session.regenerate((err) => {
         req.session.userId = user!.id;
-        res({user: user});
+        res(user);
     }));
 }
 
 /**
  * @description used for debugging
  * @param {Request} req Request object containing user id in cookie
- * @returns {Promise<UserResponse>} user
+ * @returns {Promise<User>} user
  */
-export const me: (req: Request) => Promise<UserResponse> = async function(req: Request): Promise<UserResponse> {
+export const me: (req: Request) => Promise<User> = async function(req: Request): Promise<User> {
     const user: User | undefined = await findLogginedInUser(req);
     if(!user){
         throw new HttpError([fieldError("user", "Not logged in")]);
     }
-    return {user};
+    return user;
 }
 
 /**
@@ -165,9 +164,9 @@ export const forgotPassword: (email: string) => Promise<void> = async function (
  * @description Route for a user that has reset the password using the emailed link
  * @param {string} password new password
  * @param {string} token uuid token that relates a user to a forgotten password generated link 
- * @returns {Promise<UserResponse>} user if valid, error otherwise
+ * @returns {Promise<User>} user if valid, error otherwise
  */
-export const changePasswordEmail: (password: string, token: string) => Promise<UserResponse> = async function (password: string, token: string): Promise<UserResponse> {
+export const changePasswordEmail: (password: string, token: string) => Promise<User> = async function (password: string, token: string): Promise<User> {
     const error = validatePassword(password);
     if (error){
         throw new HttpError([error]);
@@ -204,5 +203,5 @@ export const changePasswordEmail: (password: string, token: string) => Promise<U
     //delete token in database
     await deleteForgotPasswordToken(user);
 
-    return {user};
+    return user;
 }

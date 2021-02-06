@@ -2,7 +2,7 @@ import { createUser, forgotPassword, login, logout, me, changePasswordEmail } fr
 
 import {isLoggedIn} from "../middleware/isLoggedIn";
 
-import { UserResponse } from "../interfaces/UserResponse";
+import { User } from "../entities/User";
 
 import express, {NextFunction, Request, Response} from "express";
 
@@ -13,7 +13,7 @@ const router = express.Router();
 router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
     const {username, password, email} = req.body;
     try {
-        const userResponse: UserResponse = await createUser({username, password, email}, req);
+        const user: User = await createUser({username, password, email}, req);
         res.status(200).json({success: true});
     }
     catch(err) {
@@ -25,7 +25,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
 router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
     const {usernameOrEmail, password} = req.body;
     try {
-        const userResponse: UserResponse = await login({usernameOrEmail, password}, req);
+        const user: User = await login({usernameOrEmail, password}, req);
         res.status(200).json({success: true});
     }
     catch(err) {
@@ -51,7 +51,7 @@ router.get('/me', isLoggedIn, async (req: Request, res: Response) => {
 router.post('/forgotPassword', async (req: Request, res: Response, next: NextFunction) => {
     const {email} = req.body;
     try{
-        const userResponse = await forgotPassword(email);
+        const User = await forgotPassword(email);
         res.status(200).json({success: true})
     }
     catch(err){

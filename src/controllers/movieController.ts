@@ -4,8 +4,6 @@ import { createUserReview, findExistingReview, getPaginatedMovieReviews } from "
 
 import { UserReview } from "../interfaces/UserReview";
 import { ReviewFilter } from "../interfaces/ReviewFilter";
-import { UserReviewsResponse } from "../interfaces/UserReviewsResponse";
-
 
 import { fieldError } from "../utils/fieldError";
 import { HttpError } from "../utils/CustomErrors";
@@ -24,7 +22,7 @@ import { getConnection } from "typeorm";
  * @param {Request} req containing user session
  * @returns {Promise<UserReviewsResponse>} posted review
  */
-export const createReview: (userReview: UserReview, movieId: number, req: Request) => Promise<UserReviewsResponse> = async function(userReview: UserReview, movieId: number, req: Request): Promise<UserReviewsResponse> {
+export const createReview: (userReview: UserReview, movieId: number, req: Request) => Promise<Review[]> = async function(userReview: UserReview, movieId: number, req: Request): Promise<Review[]> {
     if (userReview.score < 1 || userReview.score > 10){
         throw new HttpError([fieldError("score", "Invalid score")]);
     }
@@ -44,7 +42,7 @@ export const createReview: (userReview: UserReview, movieId: number, req: Reques
     //FOR TESTING
     const newReview: Review | undefined = await Review.findOne({where: {movieId, userId: req.session.userId}, order: {id: 'DESC'}});
     
-    return {reviews: [newReview!]};
+    return [newReview!]
 }
 
 /**

@@ -11,7 +11,7 @@ export const isUser: (req: Request, res: Response, next: NextFunction) => void =
     const userid: number = +(req.params.userid as string);
     if (req.session.userId !== userid){
         let error = new HttpError([{field: "Unauthorized", message: "Unauthorized Attempt"}])
-        error.status = 401;
+        error.status = 404;
         next(error);
     }
     else{

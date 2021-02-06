@@ -1,7 +1,9 @@
 import { User } from "../entities/User";
 import { Review } from "../entities/Review";
+import { Watchlist } from "../entities/Watchlist";
+import { Favourites } from "../entities/Favourites";
 
-import { UserResponse } from "../interfaces/UserResponse";
+
 import { UserProfileEdit } from "../interfaces/UserEdit";
 import { UserGeneral } from "../interfaces/UserGeneral";
 import { CustomError } from "../interfaces/CustomError";
@@ -23,9 +25,9 @@ import { getConnection } from "typeorm";
  * @description Edit user properties such as firstname, last name, etc
  * @param {UserProfileEdit} res user properties to edit
  * @param {Request} req Cookie containing user id
- * @returns {Promise<UserResponse>} error if invalid, user otherwise
+ * @returns {Promise<User>} error if invalid, user otherwise
  */
-export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<UserResponse> = async function(userEdit: UserProfileEdit, req: Request): Promise<UserResponse> {
+export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<User> = async function(userEdit: UserProfileEdit, req: Request): Promise<User> {
     const errors: CustomError[] = [];
     if (userEdit.firstName.length > 50 || userEdit.lastName.length > 50){
         errors.push(fieldError("name", "name too long"));
@@ -49,16 +51,16 @@ export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<U
         throw new HttpError([fieldError("user", "User doesn't exist")]);
     }
 
-    return {user}
+    return user;
 }
 
 /**
  * @description Edit username and email, requires user to enter password to update
  * @param {UserGeneral} userGeneral username, email, and password
  * @param {Request} req Cookie containing user id
- * @returns {Promise<UserResponse>} error if invalid, user otherwise
+ * @returns {Promise<User>} error if invalid, user otherwise
  */
-export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Promise<UserResponse> = async function(userGeneral: UserGeneral, req: Request): Promise<UserResponse> {
+export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Promise<User> = async function(userGeneral: UserGeneral, req: Request): Promise<User> {
     // validate input
     const errors = validateUserGeneral(userGeneral);
     if (errors.length > 0){
@@ -93,7 +95,7 @@ export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Prom
     user.username = userGeneral.username;
     user.email = userGeneral.email;
     
-    return {user}
+    return user;
 }
 
 /**
@@ -134,12 +136,12 @@ export const changePassword: (oldPassword: string, newPassword: string, req: Req
  * @description return user by id
  * @param userid 
  */
-export const getUser: (userid: string) => Promise<UserResponse> = async function(userid: string): Promise<UserResponse> {
+export const getUser: (userid: string) => Promise<User> = async function(userid: string): Promise<User> {
     const user: User | undefined = await User.findOne({where: {id: userid}});
     if (!user){
         throw new HttpError([fieldError("user", "user not found")]);
     }
-    return {user};
+    return user;
 }
 
 /**
@@ -158,4 +160,36 @@ export const getUserReviews: (reviewFilter: ReviewFilter, userId: string) => Pro
     .where("review.userId = :userId", {userId})
     .getMany();
     return reviews;
+}
+
+/**
+ * @description return watchlist of user
+ * @param {string} userId 
+ * @returns {Promise<Watchlist[]>} array of watchlist, empty if none returned
+ */
+export const getWatchlist: (userId: string) => Promise<Watchlist[]> = async function(userId: string): Promise<Watchlist[]> {
+    const watchlist: Watchlist[] = await getConnection()
+    .getRepository(Watchlist)
+    .createQueryBuilder("watchlist")
+    .orderBy("watchlist.dateAdded", "DESC")
+    .where("watchlist.userId = :userId", {userId})
+    .getMany();
+
+    return watchlist;
+}
+
+/**
+ * @description return watchlist of user
+ * @param {string} userId 
+ * @returns {Promise<Favourites[]>} array of favourites, empty if none returned
+ */
+export const getFavourites: (userId: string) => Promise<Favourites[]> = async function(userId: string): Promise<Favourites[]> {
+    const watchlist: Favourites[] = await getConnection()
+    .getRepository(Favourites)
+    .createQueryBuilder("favourites")
+    .orderBy("favourites.dateAdded", "DESC")
+    .where("favourites.userId = :userId", {userId})
+    .getMany();
+
+    return watchlist;
 }

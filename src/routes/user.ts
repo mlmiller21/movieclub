@@ -1,6 +1,6 @@
 import express, {NextFunction, Request, Response} from "express";
 
-import { changePassword, editProfile, getUser, getUserReviews, updateUserGeneral } from "../controllers/userController";
+import { changePassword, editProfile, getUser, getUserReviews, updateUserGeneral, getFavourites, getWatchlist } from "../controllers/userController";
 
 import {isLoggedIn} from "../middleware/isLoggedIn";
 import { validateFilterQuery } from "../middleware/validateFilterQuery";
@@ -15,7 +15,7 @@ router.patch('/:userid/editProfile', userAuth, async (req: Request, res: Respons
     const {firstName, lastName} = req.body;
     try{
         const user = await editProfile({firstName, lastName}, req)
-        res.status(200).json({success: true, user: user.user});
+        res.status(200).json({success: true, user: user});
     }
     catch(err){
         next(err);
@@ -28,7 +28,7 @@ router.post('/:userid/general', userAuth, async (req: Request, res: Response, ne
     try {
         const user = await updateUserGeneral({username, email, password}, req);
         console.log(user);
-        res.status(200).json({success: true, user: user.user});
+        res.status(200).json({success: true, user: user});
     }
     catch(err){
         next(err);
@@ -80,10 +80,10 @@ router.get('/:userid', async (req: Request, res: Response, next: NextFunction) =
     try{
         const user = await getUser(userid);
         res.status(200).json({success: true, user: {
-            id: user.user.id,
-            username: user.user.username,
-            firstName: user.user.firstName,
-            lastName: user.user.lastName
+            id: user.id,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName
         }
         });
     }
@@ -98,15 +98,21 @@ router.get('/:userid', async (req: Request, res: Response, next: NextFunction) =
  * TODO: Only accessed by user or user's friends if permissions set to private
  */
 router.get('/:userid/watchlist', async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.query);
-    res.end();
+    const userid = req.params.userid;
+    try{
+        const watchList = await getWatchlist(userid);
+    }
+    catch(err){
+        next(err);
+    }
 })
 
 /**
  * Add a movie to a user's watchlist
  * Only accessible by that same user
  */
-router.post('/:userid/watchlist', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:userid/watchlist', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+    
     console.log(req.query);
     res.end();0
 })
@@ -116,15 +122,20 @@ router.post('/:userid/watchlist', async (req: Request, res: Response, next: Next
  * TODO: Only accessed by user or user's friends if permissions set to private
  */
 router.get('/:userid/favourites', async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.query);
-    res.end();
+    const userid = req.params.userid;
+    try{
+        const watchList = await getFavourites(userid);
+    }
+    catch(err){
+        next(err);
+    }
 })
 
 /**
  * Add a movie to a user's favourites
  * Only accessible by that same user
  */
-router.post('/:userid/favourites', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:userid/favourites', userAuth, async (req: Request, res: Response, next: NextFunction) => {
     console.log(req.query);
     res.end();
 })
@@ -133,7 +144,7 @@ router.post('/:userid/favourites', async (req: Request, res: Response, next: Nex
  * Delete a user's review
  * user must be logged in, and review must belong to them
  */
-router.delete('/:userid/review/:reviewid', async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:userid/review/:reviewid', userAuth, async (req: Request, res: Response, next: NextFunction) => {
     console.log(req.query);
     res.end();
 })
