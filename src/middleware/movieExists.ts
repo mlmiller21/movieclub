@@ -4,6 +4,7 @@ import { AxiosResponse } from 'axios';
 import { Movie } from "../entities/Movie";
 import { fieldError } from "../utils/fieldError";
 import { HttpError } from "../utils/CustomErrors";
+import { createMovie, findMovie } from "../database/movie";
 
 /**
  * @description Middleware to verify that a movie exists
@@ -23,8 +24,7 @@ export const movieExists: (req: Request, res: Response, next: NextFunction) => v
     const {title} = req.body;
     const movieid = req.params.movieid;
     // first check if it's in db
-    const movie: Movie | undefined = await Movie.findOne({where: {id: movieid}});
-    console.log(movie);
+    const movie: Movie | undefined = await findMovie(movieid);
     //Movie doesn't exist, so create an entry in database
     if (!movie){
         let response: AxiosResponse;
@@ -37,14 +37,14 @@ export const movieExists: (req: Request, res: Response, next: NextFunction) => v
             throw new HttpError([fieldError("movie", "Movie doesn't exist")]);
         }
         //Obtain the id and the title of the movie from the response
-        const {data: {id: id, original_title: movieTitle }} = response!;
+        const {data: {id: id, original_title: movieTitle }}: {data: {id: number, original_title: string}} = response!;
         //If the inputted title doesn't match the title in TMDB, error occurs
         if (movieTitle != title){
             throw new HttpError([fieldError("movie", "Titles don't match")]);
         }
         else{
             //No errors, create a movie entry in database
-            await Movie.create({id: id, title: title}).save();
+            await createMovie(id, title);
             next();
         }
     }

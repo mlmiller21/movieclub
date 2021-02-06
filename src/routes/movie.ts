@@ -39,6 +39,7 @@ router.post('/:movieid/review', isLoggedIn, movieExists, async (req: Request, re
  */
 router.get('/:movieid/reviews', async (req: Request, res: Response) => {
     
+    
 })
 
 export default router;

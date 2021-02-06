@@ -1,9 +1,13 @@
 import { User } from "../entities/User";
 import { ForgotPassword } from "../entities/ForgotPassword";
 
+import {findEmail,updateUserPassword, findLogginedInUser, findUserEmail, getExistingUserEmail} from "../database/auth";
+import { createForgotPasswordToken, findForgotPasswordToken, deleteForgotPasswordToken, deleteExpiredForgotPasswordToken} from "../database/forgotPasswordToken";
+
 import { UserRegister } from "../interfaces/UserRegister";
 import { UserResponse } from "../interfaces/UserResponse";
 import { UserLogin } from "../interfaces/UserLogin";
+import { CustomError } from "../interfaces/CustomError";
 
 import { createPassword, comparePassword } from "../utils/password";
 import { validateUserGeneral } from "../utils/validateUserGeneral";
@@ -17,8 +21,6 @@ import { COOKIE_NAME } from "../constants";
 
 import { Request, Response } from "express";
 import { v4 } from "uuid";
-import { getConnection } from "typeorm";
-import { CustomError } from "../interfaces/CustomError";
 
 
 /**
@@ -34,17 +36,10 @@ export const createUser: (userCreation: UserRegister, req: Request) => Promise<a
         throw new HttpError(errors);
     }
 
-    //Check to see if both username and email are taken
-    const userTest = await getConnection()
-        .createQueryBuilder()
-        .select("user")
-        .from(User, "user")
-        .where("user.username = :username", { username: userCreation.username })
-        .orWhere("user.email = :email", {email: userCreation.email})
-        .getMany();
+    const userTest: User[] = await getExistingUserEmail(userCreation);
     
     //if a user is returned, the username or the password are already taken
-    //Check if the user exists first, since hashing and salting a password is expensive
+    // Check if the user exists first, since hashing and salting a password is expensive
     if(userTest.length){
         const userErrors: CustomError[] = [];
         const test = userTest.forEach((user) => {
@@ -78,11 +73,7 @@ export const createUser: (userCreation: UserRegister, req: Request) => Promise<a
  */
 export const login: (userLogin: UserLogin, req: Request) => Promise<UserResponse> = async function(userLogin: UserLogin, req: Request): Promise<UserResponse> {
     //get user from db
-    const user = await User.findOne({where: 
-        userLogin.usernameOrEmail.includes("@") 
-        ? {email: userLogin.usernameOrEmail} 
-        : {username: userLogin.usernameOrEmail}}
-        );
+    const user: User | undefined = await findUserEmail(userLogin);
     //username or email don't exist
     if (!user){
         if (userLogin.usernameOrEmail.includes("@")){
@@ -111,7 +102,10 @@ export const login: (userLogin: UserLogin, req: Request) => Promise<UserResponse
  * @returns {Promise<UserResponse>} user
  */
 export const me: (req: Request) => Promise<UserResponse> = async function(req: Request): Promise<UserResponse> {
-    const user: any = await User.findOne({where: {id: req.session.userId}})
+    const user: User | undefined = await findLogginedInUser(req);
+    if(!user){
+        throw new HttpError([fieldError("user", "Not logged in")]);
+    }
     return {user};
 }
 
@@ -145,7 +139,7 @@ export const forgotPassword: (email: string) => Promise<void> = async function (
         throw new HttpError([error]);
     }
     //check if email exists
-    const user = await User.findOne({where: {email}});
+    const user = await findEmail(email);
     if (!user){
         throw new HttpError([fieldError("user", "User doesn't exist")]);
     }
@@ -164,7 +158,7 @@ export const forgotPassword: (email: string) => Promise<void> = async function (
     let expire = new Date();
     expire.setHours(expire.getHours() + 2);
 
-    await ForgotPassword.create({token: token, userid: user.id, expires: expire}).save(); 
+    await createForgotPasswordToken(token, user, expire)
 }
 
 /**
@@ -181,10 +175,11 @@ export const changePasswordEmail: (password: string, token: string) => Promise<U
 
     //First check if any tokens are expired within the database, and delete if they are
     //Tokens are expired if 2 hours have passed
-    await getConnection().createQueryBuilder().delete().from(ForgotPassword).where('expires <= :currentDate', {currentDate: new Date()}).execute();
+    await deleteExpiredForgotPasswordToken();
 
     //Get row in table that contains the same token
-    const entry = await ForgotPassword.findOne({where: {token}});
+    const entry = await findForgotPasswordToken(token);
+
     //Either token was never generated or the token expired
     if (!entry){
         throw new HttpError([fieldError("token", "Token expired")]);
@@ -204,9 +199,10 @@ export const changePasswordEmail: (password: string, token: string) => Promise<U
         throw new HttpError([fieldError("password", "unknown error creating password")]);
     }
     //update to new password
-    await User.update({id: user!.id}, {password: hashedPassword});
+    await updateUserPassword(user, hashedPassword)
+
     //delete token in database
-    await ForgotPassword.delete({userid: user!.id})
+    await deleteForgotPasswordToken(user);
 
     return {user};
 }
