@@ -1,6 +1,7 @@
 import express, {NextFunction, Request, Response} from "express";
 import { isLoggedIn } from "../middleware/isLoggedIn";
 import { movieExists } from "../middleware/movieExists";
+import { validateMovieQuery } from "../middleware/validateMovieQuery";
 
 import { createReview, getMovieReviews } from "../controllers/movieController";
 
@@ -16,7 +17,7 @@ const router = express.Router();
  */
 router.post('/:movieid/review', isLoggedIn, movieExists, async (req: Request, res: Response, next: NextFunction) => {
     const {score, title, body, spoilers} = req.body;
-    const movieid = parseInt(req.params.movieid);
+    const movieid = +req.params.movieid;
 
     try{
         const review = await createReview({score, title, body, spoilers}, movieid, req);
@@ -37,19 +38,20 @@ router.post('/:movieid/review', isLoggedIn, movieExists, async (req: Request, re
  * add pagination
  * ?filter=date&sort=asc&page=1
  */
-router.get('/:movieid/reviews', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:movieid/reviews', validateMovieQuery, async (req: Request, res: Response, next: NextFunction) => {
     const {filter, sort, page} = req.query as {[key: string]: string}
     
     const take = 5;
-    const movieid = parseInt(req.params.movieid);
+    const movieid = +req.params.movieid;
 
     try{
-        const reviews = await getMovieReviews({ filter, sort, skip: parseInt(page), take}, movieid);
+        const reviews = await getMovieReviews({ filter, sort, skip: +page, take}, movieid);
         res.status(200).json({success: true, reviews});
     }
     catch(err){
         next(err);
     }
+    res.end();
     
 })
 

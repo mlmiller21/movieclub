@@ -37,7 +37,7 @@ export const createUserReview: (movieId: number, userReview: UserReview, req: Re
     })
 }
 
-export const getMovieReviews: (reviewFilter: ReviewFilter, movieId: number) => Promise<Review[]> = async function(reviewFilter: ReviewFilter, movieId: number): Promise<Review[]>{
+export const getPaginatedMovieReviews: (reviewFilter: ReviewFilter, movieId: number) => Promise<Review[]> = async function(reviewFilter: ReviewFilter, movieId: number): Promise<Review[]>{
     return await getConnection()
         .getRepository(Review)
         .createQueryBuilder("review")

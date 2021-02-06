@@ -57,3 +57,4 @@ export const getMovieReviews: (reviewFilter: ReviewFilter, movieId: number) => P
     const reviews: Review[] = await getPaginatedMovieReviews(reviewFilter, movieId);
     return reviews;
 }
+
