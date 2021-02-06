@@ -14,7 +14,6 @@ import { HttpError } from "../utils/CustomErrors";
 import { Request, Response } from "express";
 import { v4 } from "uuid";
 import { getConnection } from "typeorm";
-import { create } from "domain";
 
 
 /**
@@ -126,4 +125,16 @@ export const changePassword: (oldPassword: string, newPassword: string, req: Req
     catch(err){
         throw new HttpError([fieldError("Error", "Unknown Error")])
     }
+}
+
+/**
+ * @description return user by id
+ * @param userid 
+ */
+export const getUser: (userid: string) => Promise<UserResponse> = async function(userid: string): Promise<UserResponse> {
+    const user: User | undefined = await User.findOne({where: {id: userid}});
+    if (!user){
+        throw new HttpError([fieldError("user", "user not found")]);
+    }
+    return {user};
 }

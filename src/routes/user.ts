@@ -1,7 +1,7 @@
 import express, {NextFunction, Request, Response} from "express";
 import {isLoggedIn} from "../middleware/isLoggedIn";
 import {isUser} from "../middleware/isUser";
-import { changePassword, editProfile, updateUserGeneral } from "../controllers/userController";
+import { changePassword, editProfile, getUser, updateUserGeneral } from "../controllers/userController";
 
 const router = express.Router();
 
@@ -54,17 +54,44 @@ router.post('/:userid/change-password', userAuth, async (req: Request, res: Resp
  * add pagination
  * ?filter=date&sort=asc&page=1
  */
-router.get('/:userid/reviews', userAuth, async (req: Request, res: Response) => {
-    //const reviews = await getUserReviews()
+router.get('/:userid/reviews', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+    const {filter, sort, page} = req.query as {[key: string]: string}
+    
+    const take = 5;
+    const movieid = +req.params.movieid;
+
+    try{
+        const reviews = await getUserReviews({ filter, sort, skip: +page, take}, req);
+        res.status(200).json({success: true, reviews});
+    }
+    catch(err){
+        next(err);
+    }
+    res.end();
+})
+
+/**
+ * Get a user
+ */
+router.get('/:userid', async (req: Request, res: Response, next: NextFunction) => {
+    const userid = req.params.userid;
+    try{
+        const user = await getUser(userid);
+        res.json(200).json({success: true, user});
+    }
+    catch(err){
+        next(err);
+    }
     console.log(req.query);
     res.end();
 })
+
 
 /**
  * Get a specific user's watchlist
  * TODO: Only accessed by user or user's friends if permissions set to private
  */
-router.get('/:userid/watchlist', async (req: Request, res: Response) => {
+router.get('/:userid/watchlist', async (req: Request, res: Response, next: NextFunction) => {
     console.log(req.query);
     res.end();
 })
@@ -73,7 +100,7 @@ router.get('/:userid/watchlist', async (req: Request, res: Response) => {
  * Add a movie to a user's watchlist
  * Only accessible by that same user
  */
-router.post('/:userid/watchlist', async (req: Request, res: Response) => {
+router.post('/:userid/watchlist', async (req: Request, res: Response, next: NextFunction) => {
     console.log(req.query);
     res.end();0
 })
@@ -82,7 +109,7 @@ router.post('/:userid/watchlist', async (req: Request, res: Response) => {
  * Get a specific user's favourites
  * TODO: Only accessed by user or user's friends if permissions set to private
  */
-router.get('/:userid/favourites', async (req: Request, res: Response) => {
+router.get('/:userid/favourites', async (req: Request, res: Response, next: NextFunction) => {
     console.log(req.query);
     res.end();
 })
@@ -91,7 +118,7 @@ router.get('/:userid/favourites', async (req: Request, res: Response) => {
  * Add a movie to a user's favourites
  * Only accessible by that same user
  */
-router.post('/:userid/favourites', async (req: Request, res: Response) => {
+router.post('/:userid/favourites', async (req: Request, res: Response, next: NextFunction) => {
     console.log(req.query);
     res.end();
 })
@@ -100,7 +127,7 @@ router.post('/:userid/favourites', async (req: Request, res: Response) => {
  * Delete a user's review
  * user must be logged in, and review must belong to them
  */
-router.delete('/:userid/review/:reviewid', async (req: Request, res: Response) => {
+router.delete('/:userid/review/:reviewid', async (req: Request, res: Response, next: NextFunction) => {
     console.log(req.query);
     res.end();
 })
