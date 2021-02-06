@@ -1,7 +1,6 @@
 import { Review } from "../entities/Review";
-import { Movie } from "../entities/Movie";
 
-import { createUserReview, findExistingReview } from "../database/review";
+import { createUserReview, findExistingReview, getPaginatedMovieReviews } from "../database/review";
 
 import { UserReview } from "../interfaces/UserReview";
 import { ReviewFilter } from "../interfaces/ReviewFilter";
@@ -23,6 +22,7 @@ import { getConnection } from "typeorm";
  * @param {UserReview} userReview score, title, body, spoilers
  * @param {number} movieId moviepk corresponding to TMDB
  * @param {Request} req containing user session
+ * @returns {Promise<UserReviewsResponse>} posted review
  */
 export const createReview: (userReview: UserReview, movieId: number, req: Request) => Promise<UserReviewsResponse> = async function(userReview: UserReview, movieId: number, req: Request): Promise<UserReviewsResponse> {
     if (userReview.score < 1 || userReview.score > 10){
@@ -45,4 +45,15 @@ export const createReview: (userReview: UserReview, movieId: number, req: Reques
     const newReview: Review | undefined = await Review.findOne({where: {movieId, userId: req.session.userId}, order: {id: 'DESC'}});
     
     return {reviews: [newReview!]};
+}
+
+/**
+ * @description get paginated result of reviews for that movie
+ * @param {ReviewFilter} reviewFilter 
+ * @param {number} movieId 
+ * @returns {Promise<Review[]>} array of reviews, if none returned then array is empty
+ */
+export const getMovieReviews: (reviewFilter: ReviewFilter, movieId: number) => Promise<Review[]> = async function(reviewFilter: ReviewFilter, movieId: number): Promise<Review[]> {
+    const reviews: Review[] = await getPaginatedMovieReviews(reviewFilter, movieId);
+    return reviews;
 }

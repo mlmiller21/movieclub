@@ -1,8 +1,11 @@
 import { Review } from "../entities/Review";
-import { User } from "../entities/User";
+
 import { UserReview } from "../interfaces/UserReview";
+import { ReviewFilter } from "../interfaces/ReviewFilter";
+
 import { getConnection } from "typeorm";
 import { Request } from "express";
+
 
 /**
  * @description find review if user has already submitted 
@@ -33,3 +36,14 @@ export const createUserReview: (movieId: number, userReview: UserReview, req: Re
         [userReview.score, movieId]);
     })
 }
+
+export const getMovieReviews: (reviewFilter: ReviewFilter, movieId: number) => Promise<Review[]> = async function(reviewFilter: ReviewFilter, movieId: number): Promise<Review[]>{
+    return await getConnection()
+        .getRepository(Review)
+        .createQueryBuilder("review")
+        .orderBy(reviewFilter.filter === "date" ? "review.createdAt" : "score", reviewFilter.sort === "asc" ? "ASC" : "DESC")
+        .skip(reviewFilter.skip * reviewFilter.take)
+        .take(reviewFilter.take)
+        .where("review.movieId = :movieId", {movieId})
+        .getMany();
+    }
