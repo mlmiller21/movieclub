@@ -1,9 +1,11 @@
 import { User } from "../entities/User";
+import { Review } from "../entities/Review";
 
 import { UserResponse } from "../interfaces/UserResponse";
 import { UserProfileEdit } from "../interfaces/UserEdit";
 import { UserGeneral } from "../interfaces/UserGeneral";
 import { CustomError } from "../interfaces/CustomError";
+import { ReviewFilter } from "../interfaces/ReviewFilter";
 
 import { createPassword, comparePassword } from "../utils/password";
 import { fieldError } from "../utils/fieldError";
@@ -14,6 +16,7 @@ import { HttpError } from "../utils/CustomErrors";
 import { Request, Response } from "express";
 import { v4 } from "uuid";
 import { getConnection } from "typeorm";
+
 
 
 /**
@@ -137,4 +140,22 @@ export const getUser: (userid: string) => Promise<UserResponse> = async function
         throw new HttpError([fieldError("user", "user not found")]);
     }
     return {user};
+}
+
+/**
+ * @description get paginated result of reviews for that movie
+ * @param {ReviewFilter} reviewFilter 
+ * @param {number} movieId 
+ * @returns {Promise<Review[]>} array of reviews, if none returned then array is empty
+ */
+export const getUserReviews: (reviewFilter: ReviewFilter, userId: string) => Promise<Review[]> = async function(reviewFilter: ReviewFilter, userId: string): Promise<Review[]> {
+    const reviews: Review[] = await getConnection()
+    .getRepository(Review)
+    .createQueryBuilder("review")
+    .orderBy(reviewFilter.filter === "date" ? "review.createdAt" : "score", reviewFilter.sort === "asc" ? "ASC" : "DESC")
+    .skip(reviewFilter.skip * reviewFilter.take)
+    .take(reviewFilter.take)
+    .where("review.userId = :userId", {userId})
+    .getMany();
+    return reviews;
 }

@@ -6,9 +6,9 @@ import { Request, Response, NextFunction } from "express";
  * @param res 
  * @param next 
  */
-export const validateMovieQuery: (req: Request, res: Response, next: NextFunction) => void = function (req: Request, res: Response, next: NextFunction) {
+export const validateFilterQuery: (req: Request, res: Response, next: NextFunction) => void = function (req: Request, res: Response, next: NextFunction) {
     //if not date or score, then set to date by default
-    req.query.filter = req.query.filter === ('date' || 'score') ? req.query.filter : 'date';
+    req.query.filter = req.query.filter === 'date' || req.query.filter == 'score' ? req.query.filter : 'date';
     //if not asc or desc, then set to desc by default
     req.query.sort = req.query.sort === ('asc' || 'desc') ? req.query.sort : 'desc';
     //if undefined or invalid input, set to 0

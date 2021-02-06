@@ -5,6 +5,7 @@ import { Movie } from "../entities/Movie";
 import { fieldError } from "../utils/fieldError";
 import { HttpError } from "../utils/CustomErrors";
 import { createMovie, findMovie } from "../database/movie";
+import { __prod__ } from "src/constants";
 
 /**
  * @description Middleware to verify that a movie exists
@@ -34,13 +35,15 @@ export const movieExists: (req: Request, res: Response, next: NextFunction) => v
         }
         catch(err){
             //Movie doesn't exist within TMDB under the given id
-            throw new HttpError([fieldError("movie", "Movie doesn't exist")]);
+            const error = new HttpError([fieldError("movie", "Movie doesn't exist")]);
+            next(error);
         }
         //Obtain the id and the title of the movie from the response
         const {data: {id: id, original_title: movieTitle }}: {data: {id: number, original_title: string}} = response!;
         //If the inputted title doesn't match the title in TMDB, error occurs
         if (movieTitle != title){
-            throw new HttpError([fieldError("movie", "Titles don't match")]);
+            const error = new HttpError([fieldError("movie", "Titles don't match")]);
+            next(error);
         }
         else{
             //No errors, create a movie entry in database
@@ -51,7 +54,8 @@ export const movieExists: (req: Request, res: Response, next: NextFunction) => v
     //Movie exists, so compare titles (again to make sure review is created under appropriate movie)
     else{
         if (movie!.title !== title){
-            throw new HttpError([fieldError("movie", "Titles don't match")]);
+            const error = new HttpError([fieldError("movie", "Titles don't match")]);
+            next(error);
         }
         else{
             next();

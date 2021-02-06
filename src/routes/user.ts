@@ -1,7 +1,10 @@
 import express, {NextFunction, Request, Response} from "express";
+
+import { changePassword, editProfile, getUser, getUserReviews, updateUserGeneral } from "../controllers/userController";
+
 import {isLoggedIn} from "../middleware/isLoggedIn";
+import { validateFilterQuery } from "../middleware/validateFilterQuery";
 import {isUser} from "../middleware/isUser";
-import { changePassword, editProfile, getUser, updateUserGeneral } from "../controllers/userController";
 
 const router = express.Router();
 
@@ -54,36 +57,39 @@ router.post('/:userid/change-password', userAuth, async (req: Request, res: Resp
  * add pagination
  * ?filter=date&sort=asc&page=1
  */
-router.get('/:userid/reviews', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:userid/reviews', validateFilterQuery, async (req: Request, res: Response, next: NextFunction) => {
     const {filter, sort, page} = req.query as {[key: string]: string}
     
     const take = 5;
-    const movieid = +req.params.movieid;
+    const userid = req.params.userid;
 
     try{
-        const reviews = await getUserReviews({ filter, sort, skip: +page, take}, req);
+        const reviews = await getUserReviews({ filter, sort, skip: +page, take}, userid);
         res.status(200).json({success: true, reviews});
     }
     catch(err){
         next(err);
     }
-    res.end();
 })
 
 /**
- * Get a user
+ * Get a user by their id
  */
 router.get('/:userid', async (req: Request, res: Response, next: NextFunction) => {
     const userid = req.params.userid;
     try{
         const user = await getUser(userid);
-        res.json(200).json({success: true, user});
+        res.status(200).json({success: true, user: {
+            id: user.user.id,
+            username: user.user.username,
+            firstName: user.user.firstName,
+            lastName: user.user.lastName
+        }
+        });
     }
     catch(err){
         next(err);
     }
-    console.log(req.query);
-    res.end();
 })
 
 

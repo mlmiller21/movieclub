@@ -1,7 +1,7 @@
 import express, {NextFunction, Request, Response} from "express";
 import { isLoggedIn } from "../middleware/isLoggedIn";
 import { movieExists } from "../middleware/movieExists";
-import { validateMovieQuery } from "../middleware/validateMovieQuery";
+import { validateFilterQuery } from "../middleware/validateFilterQuery";
 
 import { createReview, getMovieReviews } from "../controllers/movieController";
 
@@ -38,7 +38,7 @@ router.post('/:movieid/review', isLoggedIn, movieExists, async (req: Request, re
  * add pagination
  * ?filter=date&sort=asc&page=1
  */
-router.get('/:movieid/reviews', validateMovieQuery, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:movieid/reviews', validateFilterQuery, async (req: Request, res: Response, next: NextFunction) => {
     const {filter, sort, page} = req.query as {[key: string]: string}
     
     const take = 5;
