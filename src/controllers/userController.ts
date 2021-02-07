@@ -4,6 +4,9 @@ import { Watchlist } from "../entities/Watchlist";
 import { Favourites } from "../entities/Favourites";
 import { Movie } from "../entities/Movie";
 
+import { findUser } from "../database/auth"
+import { updatePassword, updateUserDetails } from "../database/user";
+
 
 import { UserProfileEdit } from "../interfaces/UserEdit";
 import { UserGeneral } from "../interfaces/UserGeneral";
@@ -18,7 +21,7 @@ import { HttpError } from "../utils/CustomErrors";
 
 import { Request, Response } from "express";
 import { v4 } from "uuid";
-import { getConnection, InsertResult, SimpleConsoleLogger } from "typeorm";
+import { getConnection, InsertResult } from "typeorm";
 
 
 
@@ -39,14 +42,7 @@ export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<U
     }
     //no validation errors, update user 
 
-    let user: User = await getConnection()
-    .createQueryBuilder()
-    .update(User)
-    .set({...userEdit})
-    .where('id = :id', {id: req.session.userId})
-    .returning('*')
-    .execute()
-    .then(res => res.raw[0]);
+    let user: User = await updateUserDetails(userEdit, req);
 
     if (!user){
         throw new HttpError([fieldError("user", "User doesn't exist")]);
@@ -107,7 +103,7 @@ export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Prom
  */
 export const changePassword: (oldPassword: string, newPassword: string, req: Request) => Promise<void> = async function(oldPassword: string, newPassword: string, req: Request): Promise<void> {
     //obtain the user
-    const user: any = await User.findOne({where: {id: req.session.userId}})
+    const user: User | undefined = await findUser(req.session.userId);
     //user doesn't exist
     if (!user){
         throw new HttpError([fieldError("user", "user doesn't exist")]);
@@ -126,7 +122,7 @@ export const changePassword: (oldPassword: string, newPassword: string, req: Req
     const hashedPassword = await createPassword(newPassword);
     console.log(hashedPassword);
     try {
-        await User.update({id: req.session.userId}, {password: hashedPassword});
+        await updatePassword(hashedPassword, req);
     }
     catch(err){
         throw new HttpError([fieldError("Error", "Unknown Error")])
@@ -138,7 +134,7 @@ export const changePassword: (oldPassword: string, newPassword: string, req: Req
  * @param userid 
  */
 export const getUser: (userid: string) => Promise<User> = async function(userid: string): Promise<User> {
-    const user: User | undefined = await User.findOne({where: {id: userid}});
+    const user: User | undefined = await findUser(+userid);
     if (!user){
         throw new HttpError([fieldError("user", "user not found")]);
     }
@@ -181,6 +177,12 @@ export const getWatchlist: (userId: string) => Promise<Movie[]> = async function
     return watchlist;
 }
 
+/**
+ * @description insert a movie into the user's watchlist
+ * @param {number} movieId 
+ * @param {Request} req 
+ * @returns {Promise<Movie>} inserted movie, or error
+ */
 export const createWatchlistEntry: (movieId: number, req: Request) => Promise<Movie> = async function(movieId: number, req: Request): Promise<Movie> {
 
     let watchlist: InsertResult;
@@ -199,6 +201,12 @@ export const createWatchlistEntry: (movieId: number, req: Request) => Promise<Mo
     return movie!;
 }
 
+/**
+ * @description delete movie from watchlist
+ * @param {number} movieId 
+ * @param {Request} req 
+ * @returns {Promise<boolean>} true if delete, false if content doesn't exist
+ */
 export const deleteWatchlistEntry: (movieId: number, req: Request) => Promise<boolean> = async function(movieId: number, req: Request): Promise<boolean> {
     
     try{
@@ -231,6 +239,12 @@ export const getFavourites: (userId: string) => Promise<Movie[]> = async functio
     return watchlist;
 }
 
+/**
+ * @description insert a movie into the user's watchlist
+ * @param {number} movieId 
+ * @param {Request} req 
+ * @returns {Promise<Movie>} inserted movie, or error
+ */
 export const createFavouriteEntry: (movieId: number, req: Request) => Promise<Movie> = async function(movieId: number, req: Request): Promise<Movie> {
     let favourites: InsertResult;
     try{
@@ -248,6 +262,12 @@ export const createFavouriteEntry: (movieId: number, req: Request) => Promise<Mo
     return movie!;
 }
 
+/**
+ * @description delete movie from watchlist
+ * @param {number} movieId 
+ * @param {Request} req 
+ * @returns {Promise<boolean>} true if delete, false if content doesn't exist
+ */
 export const deleteFavouritesEntry: (movieId: number, req: Request) => Promise<boolean> = async function(movieId: number, req: Request): Promise<boolean> {
     try{
     const row = await Favourites.delete({userId: req.session.userId, movieId: movieId});

@@ -1,7 +1,7 @@
 import { User } from "../entities/User";
 import { ForgotPassword } from "../entities/ForgotPassword";
 
-import {findEmail,updateUserPassword, findLogginedInUser, findUserEmail, getExistingUserEmail} from "../database/auth";
+import {findEmail,updateUserPassword, findUser, findUserEmail, getExistingUserEmail} from "../database/auth";
 import { createForgotPasswordToken, findForgotPasswordToken, deleteForgotPasswordToken, deleteExpiredForgotPasswordToken} from "../database/forgotPasswordToken";
 
 import { UserRegister } from "../interfaces/UserRegister";
@@ -101,7 +101,7 @@ export const login: (userLogin: UserLogin, req: Request) => Promise<User> = asyn
  * @returns {Promise<User>} user
  */
 export const me: (req: Request) => Promise<User> = async function(req: Request): Promise<User> {
-    const user: User | undefined = await findLogginedInUser(req);
+    const user: User | undefined = await findUser(req.session.userId);
     if(!user){
         throw new HttpError([fieldError("user", "Not logged in")]);
     }

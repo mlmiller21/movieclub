@@ -51,8 +51,8 @@ export const findEmail: (email: string) => Promise<User | undefined> = async fun
  * @param {Request} req
  * @returns {Promise<User | undefined>} user if found, undefined otherwise
  */
-export const findLogginedInUser: (req: Request) => Promise<User | undefined> = async function(req: Request): Promise<User | undefined>{
-    return await User.findOne({where: {id: req.session.userId}})
+export const findUser: (userId: number) => Promise<User | undefined> = async function(userId: number): Promise<User | undefined>{
+    return await User.findOne({where: {id: userId}})
 }
 
 /**

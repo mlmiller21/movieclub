@@ -5,6 +5,9 @@ import { validateFilterQuery } from "../middleware/validateFilterQuery";
 
 import { createReview, getMovieReviews } from "../controllers/movieController";
 
+import { HttpError } from "../utils/CustomErrors";
+import { fieldError } from "../utils/fieldError";
+
 const router = express.Router();
 
 // Could seed the database potentially?
@@ -17,6 +20,7 @@ const router = express.Router();
  */
 router.post('/:movieid/review', isLoggedIn, movieExists, async (req: Request, res: Response, next: NextFunction) => {
     const {score, title, body, spoilers} = req.body;
+    //movieExists validated that movieid is a valid number, allowing unary 
     const movieid = +req.params.movieid;
 
     try{
@@ -38,11 +42,16 @@ router.post('/:movieid/review', isLoggedIn, movieExists, async (req: Request, re
  * add pagination
  * ?filter=date&sort=asc&page=1
  */
-router.get('/:movieid/reviews', validateFilterQuery, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:movieid/reviews', validateFilterQuery, (req: Request, res: Response, next: NextFunction) => {
+    if (isNaN(parseInt(req.params.movieid))){
+        const error = new HttpError([fieldError("movie", "invalid id")]);
+        next(error);
+    }
+    next();
+}, async (req: Request, res: Response, next: NextFunction) => {
     const {filter, sort, page} = req.query as {[key: string]: string}
-    
     const take = 5;
-    const movieid = +req.params.movieid;
+    const movieid = parseInt(req.params.movieid);
 
     try{
         const reviews = await getMovieReviews({ filter, sort, skip: +page, take}, movieid);
@@ -50,9 +59,7 @@ router.get('/:movieid/reviews', validateFilterQuery, async (req: Request, res: R
     }
     catch(err){
         next(err);
-    }
-    res.end();
-    
+    }    
 })
 
 export default router;
