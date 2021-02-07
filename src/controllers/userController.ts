@@ -12,6 +12,7 @@ import { UserProfileEdit } from "../interfaces/UserEdit";
 import { UserGeneral } from "../interfaces/UserGeneral";
 import { CustomError } from "../interfaces/CustomError";
 import { ReviewFilter } from "../interfaces/ReviewFilter";
+import { UserReview } from "../interfaces/UserReview";
 
 import { createPassword, comparePassword } from "../utils/password";
 import { fieldError } from "../utils/fieldError";
@@ -22,6 +23,8 @@ import { HttpError } from "../utils/CustomErrors";
 import { Request, Response } from "express";
 import { v4 } from "uuid";
 import { getConnection, InsertResult } from "typeorm";
+
+
 
 
 
@@ -282,11 +285,11 @@ export const deleteFavouritesEntry: (movieId: number, req: Request) => Promise<b
 }
 
 export const deleteReview: (reviewId: number, req: Request) => Promise<boolean> = async function(reviewId: number, req: Request): Promise<boolean> {
+    const review: Review | undefined = await Review.findOne({where: {id: reviewId, userId: req.session.userId}})
+    if(!review){
+        return false;
+    }
     try{
-        const review: Review | undefined = await Review.findOne({where: {id: reviewId}})
-        if(!review){
-            return false;
-        }
         await getConnection().transaction(async (tm) => {
             await tm.delete(Review, {id: reviewId});
             await tm.query(`
@@ -298,8 +301,38 @@ export const deleteReview: (reviewId: number, req: Request) => Promise<boolean> 
             [review!.score, review!.movieId]);
         })
         return true;
-    }
-    catch(err){
+    }catch(err){
         throw new HttpError([fieldError("delete review", "unknown error")]);
     }
+}
+
+export const editReview: (userReview: UserReview, reviewId: number, req: Request) => Promise<Review> = async function(userReview: UserReview, reviewId: number, req: Request): Promise<Review> {
+    
+    const review: Review | undefined = await Review.findOne({where: {id: reviewId, userId: req.session.userId}})
+    if(!review){
+        throw new HttpError([fieldError("review", "review doesn't exist")]);
+    }
+    try{
+        await getConnection().transaction(async (tm) => {
+            await tm.update(Review, {id: reviewId}, {...userReview});
+            await tm.query(`
+                UPDATE movie 
+                SET "userScore" = (("reviewCount" * "userScore") - $1 + $2) / ("reviewCount")
+                where id = $3
+            `,
+            [review.score, userReview.score, review.movieId]);
+        })
+        review.body = userReview.body;
+        review.title = userReview.title;
+        review.score = userReview.score;
+        review.spoilers = userReview.spoilers;
+        return review;
+    }
+    catch(err){
+        throw new HttpError([fieldError("edit review", "unknown error")]);
+    }
+}
+
+export const deleteUser: (req: Request) => Promise<boolean> = async function(req: Request): Promise<boolean> {
+
 }

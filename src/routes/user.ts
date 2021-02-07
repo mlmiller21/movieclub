@@ -2,7 +2,7 @@ import express, {NextFunction, Request, Response} from "express";
 
 import { changePassword, editProfile, getUser, getUserReviews,
     updateUserGeneral, getFavourites, getWatchlist, createWatchlistEntry,
-    createFavouriteEntry, deleteWatchlistEntry, deleteFavouritesEntry, deleteReview } from "../controllers/userController";
+    createFavouriteEntry, deleteWatchlistEntry, deleteFavouritesEntry, deleteReview, editReview } from "../controllers/userController";
 
 import {isLoggedIn} from "../middleware/isLoggedIn";
 import { validateFilterQuery } from "../middleware/validateFilterQuery";
@@ -134,9 +134,9 @@ router.post('/:userid/watchlist', userAuth, movieExists, async (req: Request, re
  * user must be logged in, and movie must belong to them
  */
 router.delete('/:userid/watchlist/:movieid', userAuth, isParamNaN("movieid"), async (req: Request, res: Response, next: NextFunction) => {
-    const movieid = req.params.movieid;
+    const movieid = +req.params.movieid;
     try{
-    const success = await deleteWatchlistEntry(+movieid, req)
+    const success = await deleteWatchlistEntry(movieid, req)
     res.status(success? 200 : 204).json({success});
     }
     catch(err){
@@ -164,9 +164,9 @@ router.get('/:userid/favourites', async (req: Request, res: Response, next: Next
  * Only accessible by that same user
  */
 router.post('/:userid/favourites', userAuth, movieExists, async (req: Request, res: Response, next: NextFunction) => {
-    const {title, movieid}: {title: string, movieid: string} = req.body;
+    const {title, movieid}: {title: string, movieid: number} = req.body;
     try{
-        const movie = await createFavouriteEntry(+movieid, req);
+        const movie = await createFavouriteEntry(movieid, req);
         res.status(200).json({success: true, movie});
     }
     catch(err){
@@ -179,9 +179,9 @@ router.post('/:userid/favourites', userAuth, movieExists, async (req: Request, r
  * Only accessile by that same user
  */
 router.delete('/:userid/favourites/:movieid', userAuth, isParamNaN("movieid"), async (req: Request, res: Response, next: NextFunction) => {
-    const movieid = req.params.movieid;
+    const movieid = +req.params.movieid;
     try{
-        const success = await deleteFavouritesEntry(+movieid, req)
+        const success = await deleteFavouritesEntry(movieid, req)
         res.status(success ? 200 : 204).json({success});
     }
     catch(err){
@@ -194,9 +194,9 @@ router.delete('/:userid/favourites/:movieid', userAuth, isParamNaN("movieid"), a
  * user must be logged in, and review must belong to them
  */
 router.delete('/:userid/review/:reviewid', userAuth, isParamNaN("reviewid"), async (req: Request, res: Response, next: NextFunction) => {
-    const reviewid = req.params.reviewid;
+    const reviewid = +req.params.reviewid;
     try{
-        const success = await deleteReview(+reviewid, req);
+        const success = await deleteReview(reviewid, req);
         res.status(success ? 200: 204).json({success});
     }
     catch(err){
@@ -207,10 +207,10 @@ router.delete('/:userid/review/:reviewid', userAuth, isParamNaN("reviewid"), asy
 //edit a review
 router.patch('/:userid/review/:reviewid', userAuth, isParamNaN("reviewid"), async (req: Request, res: Response, next: NextFunction) => {
     const {score, title, body, spoilers} = req.body;
-    const reviewid = req.params.movieid;
-
+    const reviewid = +req.params.reviewid;
+    console.log(reviewid);
     try{
-        const review = await createReview({score, title, body, spoilers}, movieid, req);
+        const review = await editReview({score, title, body, spoilers}, reviewid, req);
         res.status(200).json({success: true, review});
     }
     catch(err){
@@ -219,6 +219,16 @@ router.patch('/:userid/review/:reviewid', userAuth, isParamNaN("reviewid"), asyn
 })
 
 //delete a user
+router.delete('/:uiserid', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+    const reviewid = req.params.userid;
+    try{
+        const review = await deleteUser(req);
+        res.status(200).json({success: true, review});
+    }
+    catch(err){
+        next(err);
+    }
+})
 
 //add a friend
 
