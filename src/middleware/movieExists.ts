@@ -16,14 +16,20 @@ import { __prod__ } from "src/constants";
  * 
  * This prevents filling the database with invalid movies. If the titles don't match or the movie doesn't exist, throw an error
  * 
+ * 
  * @param {Request} req param contains movieid and body contains movie title and possibly the moveid if it's a post request
  * @param {Response} res 
  * @param {NextFunction} next 
  */
-export const movieExists: (req: Request, res: Response, next: NextFunction) => void = async function (req: Request, res: Response, next: NextFunction) {
 
+export const movieExists: (req: Request, res: Response, next: NextFunction) => void = async function (req: Request, res: Response, next: NextFunction) {
     const {title} = req.body;
     const movieid = !req.params.movieid ? req.body.movieid : req.params.movieid;
+    //validate movieid
+    if (isNaN(+movieid)){
+        const error = new HttpError([fieldError("movie", "invalid id")]);
+        return next(error);
+    }
     // first check if it's in db
     let movie: Movie | undefined;
     try{

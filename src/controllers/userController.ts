@@ -217,7 +217,7 @@ export const deleteWatchlistEntry: (movieId: number, req: Request) => Promise<bo
     return true;
     }
     catch(err){
-        throw new HttpError([fieldError("watchlist", "invalid movie id")]);
+        throw new HttpError([fieldError("watchlist", "unknown error")]);
     }
 }
 
@@ -278,5 +278,28 @@ export const deleteFavouritesEntry: (movieId: number, req: Request) => Promise<b
     }
     catch(err){
         throw new HttpError([fieldError("watchlist", "invalid movie id")]);
+    }
+}
+
+export const deleteReview: (reviewId: number, req: Request) => Promise<boolean> = async function(reviewId: number, req: Request): Promise<boolean> {
+    try{
+        const review: Review | undefined = await Review.findOne({where: {id: reviewId}})
+        if(!review){
+            return false;
+        }
+        await getConnection().transaction(async (tm) => {
+            await tm.delete(Review, {id: reviewId});
+            await tm.query(`
+                UPDATE movie 
+                SET "userScore" = CASE WHEN "reviewCount" = 1 THEN "userScore" - $1 ELSE (("reviewCount" * "userScore") - $1) / ("reviewCount" - 1) END, 
+                "reviewCount" = "reviewCount" - 1 
+                where id = $2
+            `,
+            [review!.score, review!.movieId]);
+        })
+        return true;
+    }
+    catch(err){
+        throw new HttpError([fieldError("delete review", "unknown error")]);
     }
 }

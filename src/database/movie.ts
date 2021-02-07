@@ -14,7 +14,7 @@ export const findMovie: (movieid: string) => Promise<Movie | undefined> = async 
     return await Movie.findOne({where: {id: movieid}});
     }
     catch(err){
-        throw new HttpError([fieldError("movie", "invalid id")]);
+        throw new HttpError([fieldError("movie", "Unknown error")]);
     }
 }
 

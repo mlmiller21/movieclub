@@ -74,6 +74,8 @@ const main: any = async () => {
 
     })
 
+    //delete a friend
+
     app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
         res.status(400).json({err});
         // This is error handler

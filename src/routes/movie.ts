@@ -2,6 +2,7 @@ import express, {NextFunction, Request, Response} from "express";
 import { isLoggedIn } from "../middleware/isLoggedIn";
 import { movieExists } from "../middleware/movieExists";
 import { validateFilterQuery } from "../middleware/validateFilterQuery";
+import { isParamNaN } from "../middleware/isParamNaN";
 
 import { createReview, getMovieReviews } from "../controllers/movieController";
 
@@ -18,7 +19,7 @@ const router = express.Router();
  *  - Movie entry needs to be matched to opendb to prevent randoms from adding id
  *  - call api from within this route, match id and make sure it exists, then match the title of movie
  */
-router.post('/:movieid/review', isLoggedIn, movieExists, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:movieid/review', isLoggedIn, isParamNaN("movieid"), movieExists, async (req: Request, res: Response, next: NextFunction) => {
     const {score, title, body, spoilers} = req.body;
     //movieExists validated that movieid is a valid number, allowing unary 
     const movieid = +req.params.movieid;
@@ -42,17 +43,10 @@ router.post('/:movieid/review', isLoggedIn, movieExists, async (req: Request, re
  * add pagination
  * ?filter=date&sort=asc&page=1
  */
-router.get('/:movieid/reviews', validateFilterQuery, (req: Request, res: Response, next: NextFunction) => {
-    if (isNaN(parseInt(req.params.movieid))){
-        const error = new HttpError([fieldError("movie", "invalid id")]);
-        next(error);
-    }
-    next();
-}, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:movieid/reviews', validateFilterQuery, isParamNaN("movieid"), async (req: Request, res: Response, next: NextFunction) => {
     const {filter, sort, page} = req.query as {[key: string]: string}
     const take = 5;
-    const movieid = parseInt(req.params.movieid);
-
+    const movieid = +req.params.movieid;
     try{
         const reviews = await getMovieReviews({ filter, sort, skip: +page, take}, movieid);
         res.status(200).json({success: true, reviews});

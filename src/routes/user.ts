@@ -2,12 +2,13 @@ import express, {NextFunction, Request, Response} from "express";
 
 import { changePassword, editProfile, getUser, getUserReviews,
     updateUserGeneral, getFavourites, getWatchlist, createWatchlistEntry,
-    createFavouriteEntry, deleteWatchlistEntry, deleteFavouritesEntry } from "../controllers/userController";
+    createFavouriteEntry, deleteWatchlistEntry, deleteFavouritesEntry, deleteReview } from "../controllers/userController";
 
 import {isLoggedIn} from "../middleware/isLoggedIn";
 import { validateFilterQuery } from "../middleware/validateFilterQuery";
 import {isUser} from "../middleware/isUser";
 import { movieExists } from "../middleware/movieExists";
+import { isParamNaN } from "../middleware/isParamNaN";
 
 const router = express.Router();
 
@@ -117,10 +118,10 @@ router.get('/:userid/watchlist', async (req: Request, res: Response, next: NextF
  * req.body conatins title and movieid
  */
 router.post('/:userid/watchlist', userAuth, movieExists, async (req: Request, res: Response, next: NextFunction) => {
-    const {title, movieid}: {title: string, movieid: string} = req.body;
+    const {title, movieid}: {title: string, movieid: number} = req.body;
 
     try{
-        const movie = await createWatchlistEntry(+movieid, req);
+        const movie = await createWatchlistEntry(movieid, req);
         res.status(200).json({success: true, movie});
     }
     catch(err){
@@ -130,9 +131,9 @@ router.post('/:userid/watchlist', userAuth, movieExists, async (req: Request, re
 
 /**
  * Delete a movie from a user's watchlist
- * user must be logged in, and review must belong to them
+ * user must be logged in, and movie must belong to them
  */
-router.delete('/:userid/watchlist/:movieid', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:userid/watchlist/:movieid', userAuth, isParamNaN("movieid"), async (req: Request, res: Response, next: NextFunction) => {
     const movieid = req.params.movieid;
     try{
     const success = await deleteWatchlistEntry(+movieid, req)
@@ -175,13 +176,13 @@ router.post('/:userid/favourites', userAuth, movieExists, async (req: Request, r
 
 /**
  * Delete a movie from a user's favourites list
- * user must be logged in, and review must belong to them
+ * Only accessile by that same user
  */
-router.delete('/:userid/favourites/:movieid', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:userid/favourites/:movieid', userAuth, isParamNaN("movieid"), async (req: Request, res: Response, next: NextFunction) => {
     const movieid = req.params.movieid;
     try{
-    const success = await deleteFavouritesEntry(+movieid, req)
-    res.status(success? 200 : 204).json({success});
+        const success = await deleteFavouritesEntry(+movieid, req)
+        res.status(success ? 200 : 204).json({success});
     }
     catch(err){
         next(err);
@@ -192,9 +193,35 @@ router.delete('/:userid/favourites/:movieid', userAuth, async (req: Request, res
  * Delete a user's review
  * user must be logged in, and review must belong to them
  */
-router.delete('/:userid/review/:reviewid', userAuth, async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.query);
-    res.end();
+router.delete('/:userid/review/:reviewid', userAuth, isParamNaN("reviewid"), async (req: Request, res: Response, next: NextFunction) => {
+    const reviewid = req.params.reviewid;
+    try{
+        const success = await deleteReview(+reviewid, req);
+        res.status(success ? 200: 204).json({success});
+    }
+    catch(err){
+        next(err);
+    }
 })
+
+//edit a review
+router.patch('/:userid/review/:reviewid', userAuth, isParamNaN("reviewid"), async (req: Request, res: Response, next: NextFunction) => {
+    const {score, title, body, spoilers} = req.body;
+    const reviewid = req.params.movieid;
+
+    try{
+        const review = await createReview({score, title, body, spoilers}, movieid, req);
+        res.status(200).json({success: true, review});
+    }
+    catch(err){
+        next(err);
+    }
+})
+
+//delete a user
+
+//add a friend
+
+//delete a friend
 
 export default router;
