@@ -2,6 +2,7 @@ import { User } from "../entities/User";
 import { Review } from "../entities/Review";
 import { Watchlist } from "../entities/Watchlist";
 import { Favourites } from "../entities/Favourites";
+import { Movie } from "../entities/Movie";
 
 
 import { UserProfileEdit } from "../interfaces/UserEdit";
@@ -17,7 +18,7 @@ import { HttpError } from "../utils/CustomErrors";
 
 import { Request, Response } from "express";
 import { v4 } from "uuid";
-import { getConnection } from "typeorm";
+import { getConnection, InsertResult, SimpleConsoleLogger } from "typeorm";
 
 
 
@@ -167,15 +168,49 @@ export const getUserReviews: (reviewFilter: ReviewFilter, userId: string) => Pro
  * @param {string} userId 
  * @returns {Promise<Watchlist[]>} array of watchlist, empty if none returned
  */
-export const getWatchlist: (userId: string) => Promise<Watchlist[]> = async function(userId: string): Promise<Watchlist[]> {
-    const watchlist: Watchlist[] = await getConnection()
-    .getRepository(Watchlist)
-    .createQueryBuilder("watchlist")
-    .orderBy("watchlist.dateAdded", "DESC")
-    .where("watchlist.userId = :userId", {userId})
+export const getWatchlist: (userId: string) => Promise<Movie[]> = async function(userId: string): Promise<Movie[]> {
+    const watchlist: Movie[] = await getConnection()
+    .getRepository(Movie)
+    .createQueryBuilder("movie")
+    .select(["movie.id", "movie.title", "movie.posterPath", "movie.userScore"])
+    .innerJoin(Watchlist, "watchlist", 'watchlist."movieId" = movie.id')
+    .where('watchlist."userId" = :userId', {userId})
+    .orderBy('watchlist."dateAdded"', "ASC")
     .getMany();
 
     return watchlist;
+}
+
+export const createWatchlistEntry: (movieId: number, req: Request) => Promise<Movie> = async function(movieId: number, req: Request): Promise<Movie> {
+
+    let watchlist: InsertResult;
+    try{
+        watchlist = await getConnection()
+        .createQueryBuilder()
+        .insert()
+        .into(Watchlist)
+        .values({movieId, userId: req.session.userId})
+        .execute();
+    }
+    catch(err){
+        throw new HttpError([fieldError("watchlist", "movie already added")]);
+    }
+    const movie: Movie | undefined = await Movie.findOne({where: {id: watchlist.identifiers[0].movieId}});
+    return movie!;
+}
+
+export const deleteWatchlistEntry: (movieId: number, req: Request) => Promise<boolean> = async function(movieId: number, req: Request): Promise<boolean> {
+    
+    try{
+    const row = await Watchlist.delete({userId: req.session.userId, movieId: movieId});
+    if (row.affected === 0){
+        return false;
+    }
+    return true;
+    }
+    catch(err){
+        throw new HttpError([fieldError("watchlist", "invalid movie id")]);
+    }
 }
 
 /**
@@ -183,13 +218,45 @@ export const getWatchlist: (userId: string) => Promise<Watchlist[]> = async func
  * @param {string} userId 
  * @returns {Promise<Favourites[]>} array of favourites, empty if none returned
  */
-export const getFavourites: (userId: string) => Promise<Favourites[]> = async function(userId: string): Promise<Favourites[]> {
-    const watchlist: Favourites[] = await getConnection()
-    .getRepository(Favourites)
-    .createQueryBuilder("favourites")
-    .orderBy("favourites.dateAdded", "DESC")
-    .where("favourites.userId = :userId", {userId})
+export const getFavourites: (userId: string) => Promise<Movie[]> = async function(userId: string): Promise<Movie[]> {
+    const watchlist: Movie[] = await getConnection()
+    .getRepository(Movie)
+    .createQueryBuilder("movie")
+    .select(["movie.id", "movie.title", "movie.posterPath", "movie.userScore"])
+    .innerJoin(Favourites, "favourites", 'favourites."movieId" = movie.id')
+    .where('favourites."userId" = :userId', {userId})
+    .orderBy('favourites."dateAdded"', "ASC")
     .getMany();
-
+    
     return watchlist;
+}
+
+export const createFavouriteEntry: (movieId: number, req: Request) => Promise<Movie> = async function(movieId: number, req: Request): Promise<Movie> {
+    let favourites: InsertResult;
+    try{
+        favourites = await getConnection()
+        .createQueryBuilder()
+        .insert()
+        .into(Favourites)
+        .values({movieId, userId: req.session.userId})
+        .execute();
+    }
+    catch(err){
+        throw new HttpError([fieldError("favourites", "movie already added")]);
+    }
+    const movie: Movie | undefined = await Movie.findOne({where: {id: favourites.identifiers[0].movieId}});
+    return movie!;
+}
+
+export const deleteFavouritesEntry: (movieId: number, req: Request) => Promise<boolean> = async function(movieId: number, req: Request): Promise<boolean> {
+    try{
+    const row = await Favourites.delete({userId: req.session.userId, movieId: movieId});
+    if (row.affected === 0){
+        return false;
+    }
+    return true;
+    }
+    catch(err){
+        throw new HttpError([fieldError("watchlist", "invalid movie id")]);
+    }
 }

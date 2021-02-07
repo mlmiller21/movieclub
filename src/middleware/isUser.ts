@@ -8,7 +8,7 @@ import { HttpError } from "../utils/CustomErrors";
  * @param {NextFunction} next 
  */
 export const isUser: (req: Request, res: Response, next: NextFunction) => void = function (req: Request, res: Response, next: NextFunction) {
-    const userid: number = +(req.params.userid as string);
+    const userid: number = +(req.params.userid);
     if (req.session.userId !== userid){
         let error = new HttpError([{field: "Unauthorized", message: "Unauthorized Attempt"}])
         error.status = 404;

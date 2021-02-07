@@ -4,10 +4,10 @@ import {Movie} from "./Movie";
 
 @Entity("favourites")
 export class Favourites extends BaseEntity {
-    @PrimaryColumn()
+    @PrimaryColumn({unique: true})
     userId!: number;
 
-    @PrimaryColumn()
+    @PrimaryColumn({unique: true})
     movieId!: number;
 
     @CreateDateColumn()

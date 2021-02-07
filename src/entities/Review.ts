@@ -32,6 +32,7 @@ export class Review extends BaseEntity {
     updatedAt: Date;
 
     @ManyToOne(() => User, user => user.reviews, {
+        onDelete: "CASCADE",
         primary: true
     })
     @JoinColumn({name: "userId"})

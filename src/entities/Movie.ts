@@ -11,6 +11,10 @@ export class Movie extends BaseEntity {
     @Column()
     title!: string;
 
+    //posterPath to reduce api calls to TMDB when needing to display movie posters in different order
+    @Column()
+    posterPath!: string;
+
     @Column({type: "smallint", default: 0})
     reviewCount: number;
 

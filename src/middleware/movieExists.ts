@@ -16,16 +16,22 @@ import { __prod__ } from "src/constants";
  * 
  * This prevents filling the database with invalid movies. If the titles don't match or the movie doesn't exist, throw an error
  * 
- * @param {Request} req param contains movieid and body contains movie title
+ * @param {Request} req param contains movieid and body contains movie title and possibly the moveid if it's a post request
  * @param {Response} res 
  * @param {NextFunction} next 
  */
 export const movieExists: (req: Request, res: Response, next: NextFunction) => void = async function (req: Request, res: Response, next: NextFunction) {
 
     const {title} = req.body;
-    const movieid = req.params.movieid;
+    const movieid = !req.params.movieid ? req.body.movieid : req.params.movieid;
     // first check if it's in db
-    const movie: Movie | undefined = await findMovie(movieid);
+    let movie: Movie | undefined;
+    try{
+        movie = await findMovie(movieid);
+    }
+    catch(err){
+        return next(err);
+    }
     //Movie doesn't exist, so create an entry in database
     if (!movie){
         let response: AxiosResponse;
@@ -36,10 +42,10 @@ export const movieExists: (req: Request, res: Response, next: NextFunction) => v
         catch(err){
             //Movie doesn't exist within TMDB under the given id
             const error = new HttpError([fieldError("movie", "Movie doesn't exist")]);
-            next(error);
+            return next(error);
         }
         //Obtain the id and the title of the movie from the response
-        const {data: {id: id, original_title: movieTitle }}: {data: {id: number, original_title: string}} = response!;
+        const {data: {id: id, original_title: movieTitle, poster_path: poster_path }}: {data: {id: number, original_title: string, poster_path: string}} = response!;
         //If the inputted title doesn't match the title in TMDB, error occurs
         if (movieTitle != title){
             const error = new HttpError([fieldError("movie", "Titles don't match")]);
@@ -47,7 +53,7 @@ export const movieExists: (req: Request, res: Response, next: NextFunction) => v
         }
         else{
             //No errors, create a movie entry in database
-            await createMovie(id, title);
+            await createMovie(id, title, poster_path);
             next();
         }
     }

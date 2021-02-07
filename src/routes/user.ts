@@ -1,10 +1,13 @@
 import express, {NextFunction, Request, Response} from "express";
 
-import { changePassword, editProfile, getUser, getUserReviews, updateUserGeneral, getFavourites, getWatchlist } from "../controllers/userController";
+import { changePassword, editProfile, getUser, getUserReviews,
+    updateUserGeneral, getFavourites, getWatchlist, createWatchlistEntry,
+    createFavouriteEntry, deleteWatchlistEntry, deleteFavouritesEntry } from "../controllers/userController";
 
 import {isLoggedIn} from "../middleware/isLoggedIn";
 import { validateFilterQuery } from "../middleware/validateFilterQuery";
 import {isUser} from "../middleware/isUser";
+import { movieExists } from "../middleware/movieExists";
 
 const router = express.Router();
 
@@ -100,7 +103,8 @@ router.get('/:userid', async (req: Request, res: Response, next: NextFunction) =
 router.get('/:userid/watchlist', async (req: Request, res: Response, next: NextFunction) => {
     const userid = req.params.userid;
     try{
-        const watchList = await getWatchlist(userid);
+        const watchlist = await getWatchlist(userid);
+        res.status(200).json({success: true, watchlist})
     }
     catch(err){
         next(err);
@@ -110,11 +114,33 @@ router.get('/:userid/watchlist', async (req: Request, res: Response, next: NextF
 /**
  * Add a movie to a user's watchlist
  * Only accessible by that same user
+ * req.body conatins title and movieid
  */
-router.post('/:userid/watchlist', userAuth, async (req: Request, res: Response, next: NextFunction) => {
-    
-    console.log(req.query);
-    res.end();0
+router.post('/:userid/watchlist', userAuth, movieExists, async (req: Request, res: Response, next: NextFunction) => {
+    const {title, movieid}: {title: string, movieid: string} = req.body;
+
+    try{
+        const movie = await createWatchlistEntry(+movieid, req);
+        res.status(200).json({success: true, movie});
+    }
+    catch(err){
+        next(err);
+    }
+})
+
+/**
+ * Delete a movie from a user's watchlist
+ * user must be logged in, and review must belong to them
+ */
+router.delete('/:userid/watchlist/:movieid', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+    const movieid = req.params.movieid;
+    try{
+    const success = await deleteWatchlistEntry(+movieid, req)
+    res.status(success? 200 : 204).json({success});
+    }
+    catch(err){
+        next(err);
+    }
 })
 
 /**
@@ -124,7 +150,8 @@ router.post('/:userid/watchlist', userAuth, async (req: Request, res: Response, 
 router.get('/:userid/favourites', async (req: Request, res: Response, next: NextFunction) => {
     const userid = req.params.userid;
     try{
-        const watchList = await getFavourites(userid);
+        const favourites = await getFavourites(userid);
+        res.status(200).json({success: true, favourites})
     }
     catch(err){
         next(err);
@@ -135,9 +162,30 @@ router.get('/:userid/favourites', async (req: Request, res: Response, next: Next
  * Add a movie to a user's favourites
  * Only accessible by that same user
  */
-router.post('/:userid/favourites', userAuth, async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.query);
-    res.end();
+router.post('/:userid/favourites', userAuth, movieExists, async (req: Request, res: Response, next: NextFunction) => {
+    const {title, movieid}: {title: string, movieid: string} = req.body;
+    try{
+        const movie = await createFavouriteEntry(+movieid, req);
+        res.status(200).json({success: true, movie});
+    }
+    catch(err){
+        next(err);
+    }
+})
+
+/**
+ * Delete a movie from a user's favourites list
+ * user must be logged in, and review must belong to them
+ */
+router.delete('/:userid/favourites/:movieid', userAuth, async (req: Request, res: Response, next: NextFunction) => {
+    const movieid = req.params.movieid;
+    try{
+    const success = await deleteFavouritesEntry(+movieid, req)
+    res.status(success? 200 : 204).json({success});
+    }
+    catch(err){
+        next(err);
+    }
 })
 
 /**
