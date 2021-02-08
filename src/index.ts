@@ -15,7 +15,7 @@ declare module "express-session" {
     }
   }
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3080;
 
 const main: any = async () => {
     await connection;
@@ -52,9 +52,9 @@ const main: any = async () => {
         })
     )
 
-    app.use('/auth', auth);
-    app.use('/user', user);
-    app.use('/movie', movie);
+    app.use('/api/v1/auth', auth);
+    app.use('/api/v1/user', user);
+    app.use('/api/v1/movie', movie);
     
     
     
