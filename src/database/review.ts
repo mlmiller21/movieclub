@@ -8,7 +8,7 @@ import { Request } from "express";
 
 
 /**
- * @description find review if user has already submitted 
+ * @description find review using movie id and user id
  * @param {Request} req 
  * @param {number} movieid
  * @returns {Promise<Review| undefined>} reivew if found, undefined otherwise
@@ -29,7 +29,7 @@ export const createUserReview: (movieId: number, userReview: UserReview, req: Re
         await tm.create(Review, {userId: req.session.userId, movieId, ...userReview}).save();
         await tm.query(`
             UPDATE movie 
-            SET "userScore" = CASE WHEN "reviewCount" = 0 THEN $1 ELSE (("reviewCount" * "userScore") + $1) / ("reviewCount" + 1) END, 
+            SET score = CASE WHEN "reviewCount" = 0 THEN $1 ELSE (("reviewCount" * score) + $1) / ("reviewCount" + 1) END, 
             "reviewCount" = "reviewCount" + 1 
             where id = $2
         `,

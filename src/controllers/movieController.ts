@@ -26,15 +26,12 @@ export const createReview: (userReview: UserReview, movieId: number, req: Reques
     if (userReview.score < 1 || userReview.score > 10){
         throw new HttpError([fieldError("score", "Invalid score")]);
     }
-    console.log(userReview);
-
-    const review: Review | undefined = await findExistingReview(movieId, req);
-
+    
     //user hasn't submitted a review yet for this movie
-    if (!review){
+    try{
         await createUserReview(movieId, userReview, req);
     }
-    else{
+    catch(err){
         //User already submitted a review
         throw new HttpError([fieldError("review", "Already submitted review for this movie")]);
     }

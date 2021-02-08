@@ -19,7 +19,7 @@ export class Movie extends BaseEntity {
     reviewCount: number;
 
     @Column({type: "real", nullable: true, default: 0})
-    userScore: number;
+    score: number;
 
     @OneToMany(() => Review, review => review.movie)
     reviews: Review[];

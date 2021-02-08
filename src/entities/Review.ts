@@ -1,8 +1,9 @@
-import { Column, CreateDateColumn, Entity, UpdateDateColumn, ManyToOne, BaseEntity, PrimaryColumn, JoinColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, UpdateDateColumn, ManyToOne, BaseEntity, PrimaryColumn, JoinColumn, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { User } from "./User";
 import { Movie } from "./Movie";
 
 @Entity()
+@Unique(["userId", "movieId"])
 export class Review extends BaseEntity {
     @PrimaryGeneratedColumn()
     id!: number
@@ -33,14 +34,11 @@ export class Review extends BaseEntity {
 
     @ManyToOne(() => User, user => user.reviews, {
         onDelete: "CASCADE",
-        primary: true
     })
     @JoinColumn({name: "userId"})
     user: User;
 
-    @ManyToOne(() => Movie, movie => movie.reviews, {
-        primary: true
-    })
+    @ManyToOne(() => Movie, movie => movie.reviews)
     @JoinColumn({name: "movieId"})
     movie: User;
 

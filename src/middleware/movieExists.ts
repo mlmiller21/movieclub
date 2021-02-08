@@ -23,7 +23,7 @@ import { __prod__ } from "src/constants";
  */
 
 export const movieExists: (req: Request, res: Response, next: NextFunction) => void = async function (req: Request, res: Response, next: NextFunction) {
-    const {title} = req.body;
+    const {movieTitle} = req.body;
     const movieid = !req.params.movieid ? req.body.movieid : req.params.movieid;
     //validate movieid
     if (isNaN(+movieid)){
@@ -51,21 +51,23 @@ export const movieExists: (req: Request, res: Response, next: NextFunction) => v
             return next(error);
         }
         //Obtain the id and the title of the movie from the response
-        const {data: {id: id, original_title: movieTitle, poster_path: poster_path }}: {data: {id: number, original_title: string, poster_path: string}} = response!;
+        const {data: {id: id, original_title: original_title, poster_path: poster_path }}: {data: {id: number, original_title: string, poster_path: string}} = response!;
         //If the inputted title doesn't match the title in TMDB, error occurs
-        if (movieTitle != title){
+        if (original_title != movieTitle){
+            console.log(original_title);
+            console.log(movieTitle);
             const error = new HttpError([fieldError("movie", "Titles don't match")]);
             next(error);
         }
         else{
             //No errors, create a movie entry in database
-            await createMovie(id, title, poster_path);
+            await createMovie(id, movieTitle, poster_path);
             next();
         }
     }
     //Movie exists, so compare titles (again to make sure review is created under appropriate movie)
     else{
-        if (movie!.title !== title){
+        if (movie!.title !== movieTitle){
             const error = new HttpError([fieldError("movie", "Titles don't match")]);
             next(error);
         }

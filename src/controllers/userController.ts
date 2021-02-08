@@ -171,7 +171,7 @@ export const getWatchlist: (userId: string) => Promise<Movie[]> = async function
     const watchlist: Movie[] = await getConnection()
     .getRepository(Movie)
     .createQueryBuilder("movie")
-    .select(["movie.id", "movie.title", "movie.posterPath", "movie.userScore"])
+    .select(["movie.id", "movie.title", "movie.posterPath", "movie.score"])
     .innerJoin(Watchlist, "watchlist", 'watchlist."movieId" = movie.id')
     .where('watchlist."userId" = :userId', {userId})
     .orderBy('watchlist."dateAdded"', "ASC")
@@ -233,7 +233,7 @@ export const getFavourites: (userId: string) => Promise<Movie[]> = async functio
     const watchlist: Movie[] = await getConnection()
     .getRepository(Movie)
     .createQueryBuilder("movie")
-    .select(["movie.id", "movie.title", "movie.posterPath", "movie.userScore"])
+    .select(["movie.id", "movie.title", "movie.posterPath", "movie.score"])
     .innerJoin(Favourites, "favourites", 'favourites."movieId" = movie.id')
     .where('favourites."userId" = :userId', {userId})
     .orderBy('favourites."dateAdded"', "ASC")
@@ -284,6 +284,12 @@ export const deleteFavouritesEntry: (movieId: number, req: Request) => Promise<b
     }
 }
 
+/**
+ * @description delete a review and update the movie's score 
+ * @param {number} reviewId 
+ * @param {Request} req 
+ * @returns {Promise<boolean>} return true if deleted, false if it doesn't exist and error if a transaction error occurs
+ */
 export const deleteReview: (reviewId: number, req: Request) => Promise<boolean> = async function(reviewId: number, req: Request): Promise<boolean> {
     const review: Review | undefined = await Review.findOne({where: {id: reviewId, userId: req.session.userId}})
     if(!review){
@@ -294,7 +300,7 @@ export const deleteReview: (reviewId: number, req: Request) => Promise<boolean> 
             await tm.delete(Review, {id: reviewId});
             await tm.query(`
                 UPDATE movie 
-                SET "userScore" = CASE WHEN "reviewCount" = 1 THEN "userScore" - $1 ELSE (("reviewCount" * "userScore") - $1) / ("reviewCount" - 1) END, 
+                SET score = CASE WHEN "reviewCount" = 1 THEN 0 ELSE (("reviewCount" * score) - $1) / ("reviewCount" - 1) END, 
                 "reviewCount" = "reviewCount" - 1 
                 where id = $2
             `,
@@ -306,6 +312,13 @@ export const deleteReview: (reviewId: number, req: Request) => Promise<boolean> 
     }
 }
 
+/**
+ * @description Edit a review and update the movie's score 
+ * @param {UserReview} userReview 
+ * @param {number} reviewId 
+ * @param {Request} req 
+ * @returns {Promise<Review>} return the review that was edited, throws error if review doesn't exist
+ */
 export const editReview: (userReview: UserReview, reviewId: number, req: Request) => Promise<Review> = async function(userReview: UserReview, reviewId: number, req: Request): Promise<Review> {
     
     const review: Review | undefined = await Review.findOne({where: {id: reviewId, userId: req.session.userId}})
@@ -317,13 +330,13 @@ export const editReview: (userReview: UserReview, reviewId: number, req: Request
             await tm.update(Review, {id: reviewId}, {...userReview});
             await tm.query(`
                 UPDATE movie 
-                SET "userScore" = (("reviewCount" * "userScore") - $1 + $2) / ("reviewCount")
+                SET score = (("reviewCount" * score) - $1 + $2) / ("reviewCount")
                 where id = $3
             `,
             [review.score, userReview.score, review.movieId]);
         })
         review.body = userReview.body;
-        review.title = userReview.title;
+        review.title = userReview.title; 
         review.score = userReview.score;
         review.spoilers = userReview.spoilers;
         return review;
@@ -333,6 +346,32 @@ export const editReview: (userReview: UserReview, reviewId: number, req: Request
     }
 }
 
+/**
+ * @description delete a user and update each movie per review deleted
+ * @param {Request} req containing user id
+ * @returns true if deleted, false if user doesn't exist and error if error occured during transaction
+ */
 export const deleteUser: (req: Request) => Promise<boolean> = async function(req: Request): Promise<boolean> {
+    const user: User | undefined = await findUser(req.session.userId);
+    if (!user){
+        false;
+    }
+    try{
+        await getConnection().transaction(async (tm) => {
+            await tm.query(`UPDATE movie 
+            SET score = CASE WHEN m."reviewCount" = 1 THEN 0 ELSE ((m.score * m."reviewCount") - r.score) / (m."reviewCount" - 1) END,
+            "reviewCount" = m."reviewCount" - 1 
+            FROM movie AS m INNER JOIN (SELECT "userId", "movieId", score
+            FROM review) r 
+            ON m.id = r."movieId" 
+            WHERE movie.id = r."movieId" AND r."userId" = $1;
+            `, [req.session.userId]);
+            await tm.delete(User, {id: req.session.userId});
+        });
+    }
+    catch(err){
+        throw new HttpError([fieldError("delete user", "unknown error")]);
+    }
 
+    return true;
 }

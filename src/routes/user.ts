@@ -2,7 +2,7 @@ import express, {NextFunction, Request, Response} from "express";
 
 import { changePassword, editProfile, getUser, getUserReviews,
     updateUserGeneral, getFavourites, getWatchlist, createWatchlistEntry,
-    createFavouriteEntry, deleteWatchlistEntry, deleteFavouritesEntry, deleteReview, editReview } from "../controllers/userController";
+    createFavouriteEntry, deleteWatchlistEntry, deleteFavouritesEntry, deleteReview, editReview, deleteUser } from "../controllers/userController";
 
 import {isLoggedIn} from "../middleware/isLoggedIn";
 import { validateFilterQuery } from "../middleware/validateFilterQuery";
@@ -115,10 +115,10 @@ router.get('/:userid/watchlist', async (req: Request, res: Response, next: NextF
 /**
  * Add a movie to a user's watchlist
  * Only accessible by that same user
- * req.body conatins title and movieid
+ * req.body conatins movieTitle and movieid
  */
 router.post('/:userid/watchlist', userAuth, movieExists, async (req: Request, res: Response, next: NextFunction) => {
-    const {title, movieid}: {title: string, movieid: number} = req.body;
+    const {movieTitle, movieid}: {movieTitle: string, movieid: number} = req.body;
 
     try{
         const movie = await createWatchlistEntry(movieid, req);
@@ -164,7 +164,7 @@ router.get('/:userid/favourites', async (req: Request, res: Response, next: Next
  * Only accessible by that same user
  */
 router.post('/:userid/favourites', userAuth, movieExists, async (req: Request, res: Response, next: NextFunction) => {
-    const {title, movieid}: {title: string, movieid: number} = req.body;
+    const {movieTitle, movieid}: {movieTitle: string, movieid: number} = req.body;
     try{
         const movie = await createFavouriteEntry(movieid, req);
         res.status(200).json({success: true, movie});
@@ -219,8 +219,7 @@ router.patch('/:userid/review/:reviewid', userAuth, isParamNaN("reviewid"), asyn
 })
 
 //delete a user
-router.delete('/:uiserid', userAuth, async (req: Request, res: Response, next: NextFunction) => {
-    const reviewid = req.params.userid;
+router.delete('/:userid', userAuth, async (req: Request, res: Response, next: NextFunction) => {
     try{
         const review = await deleteUser(req);
         res.status(200).json({success: true, review});
