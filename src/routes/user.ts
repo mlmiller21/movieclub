@@ -229,8 +229,4 @@ router.delete('/:userid', userAuth, async (req: Request, res: Response, next: Ne
     }
 })
 
-//add a friend
-
-//delete a friend
-
 export default router;

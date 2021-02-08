@@ -5,6 +5,7 @@ import {isLoggedIn} from "../middleware/isLoggedIn";
 import { User } from "../entities/User";
 
 import express, {NextFunction, Request, Response} from "express";
+import { nextTick } from "process";
 
 
 const router = express.Router();
@@ -41,10 +42,14 @@ router.post('/logout', async (req: Request, res: Response, next: NextFunction) =
 })
 
 // Obtain information for the current user
-router.get('/me', isLoggedIn, async (req: Request, res: Response) => {
-    const user = await me(req);
-    console.log(user);
-    res.status(200).json(user);
+router.get('/me', isLoggedIn, async (req: Request, res: Response, next: NextFunction) => {
+    try{
+        const user = await me(req);
+        res.status(200).json(user);
+    }
+    catch(err){
+        next(err);
+    }
 })
 
 // Email a link to reset password

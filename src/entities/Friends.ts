@@ -1,4 +1,4 @@
-import {Entity, CreateDateColumn, ManyToOne, PrimaryColumn, JoinColumn, BaseEntity} from "typeorm";
+import {Entity, CreateDateColumn, ManyToOne, PrimaryColumn, JoinColumn, BaseEntity, Column} from "typeorm";
 import {User} from "./User"
 
 @Entity("friends")
@@ -11,6 +11,10 @@ export class Friends extends BaseEntity {
 
     @CreateDateColumn()
     dateAdded: Date;
+
+    //One of the following: ['PENDING', 'BLOCKED', 'FRIEND']
+    @Column()
+    status: string;
 
     @ManyToOne(() => User, user => user.friends, {
         onDelete: "CASCADE"

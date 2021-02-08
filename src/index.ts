@@ -59,22 +59,13 @@ const main: any = async () => {
     
     
     /**
-     * Search for a specific user
+     * Search for a specific user by username
      * Return a list of users?
      * make use of debounce in frontend (maybe 400ms?)
      */
-    app.get('/searchuser', async (req: Request, res: Response) => {
-
+    app.get('/searchuser/:username', async (req: Request, res: Response, next: NextFunction) => {
+        //getConnection().createQueryBuilder()
     })
-
-    /**
-     * Add a friend by pk
-     */
-    app.post('/addfriend/:userid', async (req: Request, res: Response) => {
-
-    })
-
-    //delete a friend
 
     app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
         res.status(400).json({err});
@@ -86,6 +77,13 @@ const main: any = async () => {
     })
     
 }
+
+/**
+ * TODO:
+ *  - Sockets for friends
+ *  - Upload image for user. Store in either: disk, memory, or stream to some cloud service
+ *  - Send emails
+ */
 
 
 main();
