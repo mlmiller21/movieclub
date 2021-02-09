@@ -1,6 +1,6 @@
 # typeorm username/pw/db
-.typeormconfig.ts
-.apikeys.ts
 
 /dist
 /node_modules
+/src/typeormconfig.ts
+/src/apikeys.ts
