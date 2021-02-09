@@ -1,11 +1,12 @@
 import { User } from "../entities/User";
 import { Review } from "../entities/Review";
-import { Watchlist } from "../entities/Watchlist";
-import { Favourites } from "../entities/Favourites";
 import { Movie } from "../entities/Movie";
 
 import { findUser } from "../database/auth"
-import { updatePassword, updateUserDetails } from "../database/user";
+import { deleteUserDB, updatePassword, updateUserDetails } from "../database/user";
+import { getUserWatchlist, createWatchlistMovie, deleteWatchlistMovie } from "../database/watchlist";
+import { getUserFavourites, createFavouriteMovie, deleteFavouriteMovie } from "../database/favourites";
+import { deleteUserReview, editUserReview, findUserReview } from "../database/review";
 
 
 import { UserProfileEdit } from "../interfaces/UserEdit";
@@ -22,6 +23,7 @@ import { HttpError } from "../utils/CustomErrors";
 
 import { Request, Response } from "express";
 import { getConnection, InsertResult } from "typeorm";
+
 
 
 
@@ -167,14 +169,7 @@ export const getUserReviews: (reviewFilter: ReviewFilter, userId: string) => Pro
  * @returns {Promise<Watchlist[]>} array of watchlist, empty if none returned
  */
 export const getWatchlist: (userId: string) => Promise<Movie[]> = async function(userId: string): Promise<Movie[]> {
-    const watchlist: Movie[] = await getConnection()
-    .getRepository(Movie)
-    .createQueryBuilder("movie")
-    .select(["movie.id", "movie.title", "movie.posterPath", "movie.score"])
-    .innerJoin(Watchlist, "watchlist", 'watchlist."movieId" = movie.id')
-    .where('watchlist."userId" = :userId', {userId})
-    .orderBy('watchlist."dateAdded"', "ASC")
-    .getMany();
+    const watchlist: Movie[] = await getUserWatchlist(userId);
 
     return watchlist;
 }
@@ -189,12 +184,7 @@ export const createWatchlistEntry: (movieId: number, req: Request) => Promise<Mo
 
     let watchlist: InsertResult;
     try{
-        watchlist = await getConnection()
-        .createQueryBuilder()
-        .insert()
-        .into(Watchlist)
-        .values({movieId, userId: req.session.userId})
-        .execute();
+        watchlist = await createWatchlistMovie(movieId, req.session.userId);
     }
     catch(err){
         throw new HttpError([fieldError("watchlist", "movie already added")]);
@@ -212,7 +202,7 @@ export const createWatchlistEntry: (movieId: number, req: Request) => Promise<Mo
 export const deleteWatchlistEntry: (movieId: number, req: Request) => Promise<boolean> = async function(movieId: number, req: Request): Promise<boolean> {
     
     try{
-    const row = await Watchlist.delete({userId: req.session.userId, movieId: movieId});
+        const row = await deleteWatchlistMovie(movieId, req.session.userId);
     if (row.affected === 0){
         return false;
     }
@@ -229,14 +219,7 @@ export const deleteWatchlistEntry: (movieId: number, req: Request) => Promise<bo
  * @returns {Promise<Favourites[]>} array of favourites, empty if none returned
  */
 export const getFavourites: (userId: string) => Promise<Movie[]> = async function(userId: string): Promise<Movie[]> {
-    const watchlist: Movie[] = await getConnection()
-    .getRepository(Movie)
-    .createQueryBuilder("movie")
-    .select(["movie.id", "movie.title", "movie.posterPath", "movie.score"])
-    .innerJoin(Favourites, "favourites", 'favourites."movieId" = movie.id')
-    .where('favourites."userId" = :userId', {userId})
-    .orderBy('favourites."dateAdded"', "ASC")
-    .getMany();
+    const watchlist: Movie[] = await getUserFavourites(userId);
     
     return watchlist;
 }
@@ -250,12 +233,7 @@ export const getFavourites: (userId: string) => Promise<Movie[]> = async functio
 export const createFavouriteEntry: (movieId: number, req: Request) => Promise<Movie> = async function(movieId: number, req: Request): Promise<Movie> {
     let favourites: InsertResult;
     try{
-        favourites = await getConnection()
-        .createQueryBuilder()
-        .insert()
-        .into(Favourites)
-        .values({movieId, userId: req.session.userId})
-        .execute();
+        favourites = await createFavouriteMovie(movieId, req.session.userId);
     }
     catch(err){
         throw new HttpError([fieldError("favourites", "movie already added")]);
@@ -272,7 +250,7 @@ export const createFavouriteEntry: (movieId: number, req: Request) => Promise<Mo
  */
 export const deleteFavouritesEntry: (movieId: number, req: Request) => Promise<boolean> = async function(movieId: number, req: Request): Promise<boolean> {
     try{
-    const row = await Favourites.delete({userId: req.session.userId, movieId: movieId});
+        const row = await deleteFavouriteMovie(movieId, req.session.userId);
     if (row.affected === 0){
         return false;
     }
@@ -290,21 +268,12 @@ export const deleteFavouritesEntry: (movieId: number, req: Request) => Promise<b
  * @returns {Promise<boolean>} return true if deleted, false if it doesn't exist and error if a transaction error occurs
  */
 export const deleteReview: (reviewId: number, req: Request) => Promise<boolean> = async function(reviewId: number, req: Request): Promise<boolean> {
-    const review: Review | undefined = await Review.findOne({where: {id: reviewId, userId: req.session.userId}})
+    const review: Review | undefined = await findUserReview(reviewId, req.session.userId);
     if(!review){
         return false;
     }
     try{
-        await getConnection().transaction(async (tm) => {
-            await tm.delete(Review, {id: reviewId});
-            await tm.query(`
-                UPDATE movie 
-                SET score = CASE WHEN "reviewCount" = 1 THEN 0 ELSE (("reviewCount" * score) - $1) / ("reviewCount" - 1) END, 
-                "reviewCount" = "reviewCount" - 1 
-                where id = $2
-            `,
-            [review!.score, review!.movieId]);
-        })
+        await deleteUserReview(reviewId, review!.movieId, review!.score);
         return true;
     }catch(err){
         throw new HttpError([fieldError("delete review", "unknown error")]);
@@ -320,20 +289,12 @@ export const deleteReview: (reviewId: number, req: Request) => Promise<boolean> 
  */
 export const editReview: (userReview: UserReview, reviewId: number, req: Request) => Promise<Review> = async function(userReview: UserReview, reviewId: number, req: Request): Promise<Review> {
     
-    const review: Review | undefined = await Review.findOne({where: {id: reviewId, userId: req.session.userId}})
+    const review: Review | undefined = await findUserReview(reviewId, req.session.userId);
     if(!review){
         throw new HttpError([fieldError("review", "review doesn't exist")]);
     }
     try{
-        await getConnection().transaction(async (tm) => {
-            await tm.update(Review, {id: reviewId}, {...userReview});
-            await tm.query(`
-                UPDATE movie 
-                SET score = (("reviewCount" * score) - $1 + $2) / ("reviewCount")
-                where id = $3
-            `,
-            [review.score, userReview.score, review.movieId]);
-        })
+        await editUserReview(reviewId, review.movieId, userReview, review.score);
         review.body = userReview.body;
         review.title = userReview.title; 
         review.score = userReview.score;
@@ -356,17 +317,7 @@ export const deleteUser: (req: Request) => Promise<boolean> = async function(req
         false;
     }
     try{
-        await getConnection().transaction(async (tm) => {
-            await tm.query(`UPDATE movie 
-            SET score = CASE WHEN m."reviewCount" = 1 THEN 0 ELSE ((m.score * m."reviewCount") - r.score) / (m."reviewCount" - 1) END,
-            "reviewCount" = m."reviewCount" - 1 
-            FROM movie AS m INNER JOIN (SELECT "userId", "movieId", score
-            FROM review) r 
-            ON m.id = r."movieId" 
-            WHERE movie.id = r."movieId" AND r."userId" = $1;
-            `, [req.session.userId]);
-            await tm.delete(User, {id: req.session.userId});
-        });
+        await deleteUserDB(req.session.userId);
     }
     catch(err){
         throw new HttpError([fieldError("delete user", "unknown error")]);

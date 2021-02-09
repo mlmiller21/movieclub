@@ -1,9 +1,9 @@
 import { User } from "../entities/User";
+
 import { UserLogin } from "../interfaces/UserLogin";
 import { UserRegister } from "../interfaces/UserRegister";
-import { getConnection } from "typeorm";
 
-import { Request } from "express";
+import { getConnection } from "typeorm";
     
 /**
  * @description Check to see if both username and email are taken

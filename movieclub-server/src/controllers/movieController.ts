@@ -1,6 +1,7 @@
 import { Review } from "../entities/Review";
 
-import { createUserReview, findExistingReview, getPaginatedMovieReviews } from "../database/review";
+import { createUserReview } from "../database/review";
+import { getPaginatedMovieReviews } from "../database/movie";
 
 import { UserReview } from "../interfaces/UserReview";
 import { ReviewFilter } from "../interfaces/ReviewFilter";
@@ -9,9 +10,6 @@ import { fieldError } from "../utils/fieldError";
 import { HttpError } from "../utils/CustomErrors";
 
 import { Request, Response } from "express";
-
-import { getConnection } from "typeorm";
-
 
 /**
  * @description Post a review, users can only post one review per movie, once a review is posted the movie's score is updated to reflect the new review
