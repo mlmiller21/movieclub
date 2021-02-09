@@ -6,8 +6,8 @@ import { Favourites } from "./Favourites";
 
 @Entity("user")
 export class User extends BaseEntity {
-    @PrimaryGeneratedColumn()
-    id!: number;
+    @PrimaryGeneratedColumn("uuid")
+    id!: string;
 
     @Column({ unique: true, type: "varchar", length: "50"})
     username!: string;

@@ -11,7 +11,7 @@ export class ForgotPassword extends BaseEntity {
     expires: Date;
 
     @Column({nullable: false, unique: true})
-    userid: number;
+    userid: string;
 
     @OneToOne(() => User,{
         onDelete: "CASCADE"

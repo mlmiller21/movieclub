@@ -21,7 +21,6 @@ import { validateUserGeneral } from "../utils/validateUserGeneral";
 import { HttpError } from "../utils/CustomErrors";
 
 import { Request, Response } from "express";
-import { v4 } from "uuid";
 import { getConnection, InsertResult } from "typeorm";
 
 
@@ -137,7 +136,7 @@ export const changePassword: (oldPassword: string, newPassword: string, req: Req
  * @param userid 
  */
 export const getUser: (userid: string) => Promise<User> = async function(userid: string): Promise<User> {
-    const user: User | undefined = await findUser(+userid);
+    const user: User | undefined = await findUser(userid);
     if (!user){
         throw new HttpError([fieldError("user", "user not found")]);
     }

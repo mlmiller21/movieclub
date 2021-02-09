@@ -11,7 +11,7 @@ import { HttpError } from "./utils/CustomErrors";
 
 declare module "express-session" {
     interface Session {
-      userId: number;
+      userId: string;
     }
   }
 

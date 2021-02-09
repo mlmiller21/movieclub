@@ -4,10 +4,10 @@ import {User} from "./User"
 @Entity("friends")
 export class Friends extends BaseEntity {
     @PrimaryColumn()
-    friendOne!: number;
+    friendOne!: string;
 
     @PrimaryColumn()
-    friendTwo!: number;
+    friendTwo!: string;
 
     @CreateDateColumn()
     dateAdded: Date;

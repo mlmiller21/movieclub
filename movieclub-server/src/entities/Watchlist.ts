@@ -5,7 +5,7 @@ import {Movie} from "./Movie";
 @Entity("watchlist")
 export class Watchlist extends BaseEntity {
     @PrimaryColumn({unique: true})
-    userId!: number;
+    userId!: string;
 
     @PrimaryColumn({unique: true})
     movieId!: number;

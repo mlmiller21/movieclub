@@ -6,13 +6,13 @@ import { Movie } from "./Movie";
 @Unique(["userId", "movieId"])
 export class Review extends BaseEntity {
     @PrimaryGeneratedColumn()
-    id!: number
+    id!: number;
 
     @Column()
-    userId!: number
+    userId!: string;
 
     @Column()
-    movieId!: number
+    movieId!: number;
 
     @Column({type: "varchar", length: "100", nullable: true})
     title: string;
