@@ -61,7 +61,15 @@ const register: react.FC<RegisterFormProps> = ({}) => {
             registerContext.setErrors(errors);
         }
         else {
-            registerContext.createUser({username: 'test', email: 'email@email.ca', password: 'password'});
+            await registerContext.createUser({username, email, password});
+            Array.from(document.querySelectorAll('input[type="password"]')).forEach(input => 
+                (input as HTMLInputElement).value = ''
+            )
+            setRegister({
+                ...registerState,
+                password: '',
+                password2: ''
+            })
         }
     }
 
@@ -116,11 +124,11 @@ const register: react.FC<RegisterFormProps> = ({}) => {
         </form>
         <span>
             Already have an account? Login
-            
             <Link href="/">
                 <a>here</a>                    
             </Link>
         </span>
+        <br/>
         </>
     );
 }

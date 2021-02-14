@@ -1,8 +1,8 @@
-import { SET_LOADING, SET_ERROR, CLEAR_ERROR } from "../../actionTypes";
+import { SET_LOADING, SET_ERROR } from "../../actionTypes";
 
 type RegisterState = any;
 type RegisterAction = {
-    type: 'SET_LOADING' | 'SET_ERROR' | 'CLEAR_ERROR',
+    type: 'SET_LOADING' | 'SET_ERROR' | 'test'
     payload?: any
     
 }
@@ -22,11 +22,6 @@ export const RegisterReducer = function(state: RegisterState, action: RegisterAc
                 ...state,
                 loading: false,
                 errors: action.payload
-            }
-        case CLEAR_ERROR:
-            return{
-                ...state,
-                errors: {}
             }
         default:
             return state;

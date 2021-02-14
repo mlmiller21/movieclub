@@ -1,0 +1,1 @@
+export const MOVIECLUB_API = 'http://localhost:3080/api/v1';

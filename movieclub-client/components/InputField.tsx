@@ -15,6 +15,7 @@ const StyledInput = styled.div`
     }
     p {
         color: red;
+        margin: 0;
     }
 `;
 

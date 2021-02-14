@@ -41,7 +41,7 @@ export const createUser: (userCreation: UserRegister, req: Request) => Promise<a
     // Check if the user exists first, since hashing and salting a password is expensive
     if(userTest.length){
         const userErrors: CustomError[] = [];
-        const test = userTest.forEach((user) => {
+        userTest.forEach((user) => {
             if (user.username == userCreation.username){
                 userErrors.push(fieldError("username", "username already exists"));
             }

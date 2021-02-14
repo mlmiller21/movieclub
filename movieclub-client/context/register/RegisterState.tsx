@@ -1,8 +1,9 @@
 import react, {useReducer} from "react";
 import { RegisterContext } from "./RegisterContext";
 import { RegisterReducer } from "./RegisterReducer";
-import { SET_ERROR, SET_LOADING, CLEAR_ERROR } from "../../actionTypes"
+import { SET_ERROR, SET_LOADING } from "../../actionTypes"
 import axios from "axios";
+import { MOVIECLUB_API } from "../../config"
 
 
 interface RegisterStateProps {
@@ -16,7 +17,8 @@ interface RegisterForm {
 }
 
 
-const RegisterState: React.FC<RegisterStateProps> = ({children}: {children: any}) => {
+const RegisterState: react.FC<RegisterStateProps> = ({children}: {children: any}) => {
+    
     const initialState = {
         loading: false,
         errors: {}
@@ -24,14 +26,33 @@ const RegisterState: React.FC<RegisterStateProps> = ({children}: {children: any}
 
     const [state, dispatch] = useReducer(RegisterReducer, initialState)
 
+    //post user data to server
     const createUser = async (registerForm: RegisterForm) => {
         setLoading();
-        await axios.post('http://localhost:3080/api/v1/register', {
-            username: registerForm.username,
-            email: registerForm.email,
-            password: registerForm.password
-        },
-        {withCredentials: true})
+        try {
+            const res = await axios.post(MOVIECLUB_API + '/auth/register', {
+                username: registerForm.username,
+                email: registerForm.email,
+                password: registerForm.password
+            },
+            {withCredentials: true});
+
+            let data = res.data;
+            if (data.success){
+                //redirect here, maybe do stuff
+            }
+        }
+        catch(err){
+            const error = err.response.data.err;
+            if (error.status = 400){
+                const errors = error.errors.reduce((acc, err) => {
+                    //for each error message, errors have the form of {field, message}
+                    acc[err.field] = err.message;
+                    return acc;
+                }, {})
+                dispatch({type: SET_ERROR, payload: errors})
+            }
+        }
     }
 
     const setLoading = () => {

@@ -11,7 +11,7 @@ const Register: react.FC<RegisterProps> = ({}) => {
 
     return (
         <RegisterState>
-            <Wrapper variant='small'>
+            <Wrapper variant='regular'>
                 <RegisterForm/>
             </Wrapper>
         </RegisterState>
