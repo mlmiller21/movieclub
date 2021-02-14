@@ -8,6 +8,7 @@ import user from "./routes/user";
 import auth from "./routes/auth";
 import movie from "./routes/movie";
 import { HttpError } from "./utils/CustomErrors";
+import cors from "cors";
 
 declare module "express-session" {
     interface Session {
@@ -30,8 +31,16 @@ const main: any = async () => {
     // Hide use of express
     app.disable('x-powered-by');
 
+    app.use(
+        cors({
+            origin: "http://localhost:3000",
+            credentials: true
+        })
+    )
+
+    //setting up redis to store user sessions
     const redisStore: connectRedis.RedisStore = connectRedis(session);
-    const redisClient = new redis();
+    const redisClient = new redis();    
 
     app.use(
         session({
