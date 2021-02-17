@@ -1,5 +1,6 @@
 import { Review } from "../entities/Review";
 import { Movie } from "../entities/Movie";
+import { User } from "../entities/User";
 
 import { ReviewFilter } from "../interfaces/ReviewFilter";
 
@@ -11,12 +12,12 @@ import { getConnection } from "typeorm";
 
 /**
  * @description find a movie by its id
- * @param {string} movieid
+ * @param {number} movieid
  * @returns {Promise<Movie | undefined>} movie if found, undefined otherwise
  */
-export const findMovie: (movieid: string) => Promise<Movie | undefined> = async function(movieid: string): Promise<Movie | undefined>{
+export const findMovie: (movieid: number) => Promise<Movie | undefined> = async function(movieid: number): Promise<Movie | undefined>{
     try{
-    return await Movie.findOne({where: {id: movieid}});
+        return await Movie.findOne({where: {id: movieid}});
     }
     catch(err){
         throw new HttpError([fieldError("movie", "Unknown error")]);
@@ -39,15 +40,17 @@ export const createMovie: (id: number, title: string, posterPath: string) => Pro
  * @description returns the paginated results of a movie's reviews
  * @param {ReviewFilter} reviewFilter 
  * @param {number} movieId 
- * @returns {Promise<Review[]>} array of paginated reviews, or empty if they don't exist
+ * @returns {Promise<Review[]>} array of paginated reviews along with the username , or empty if they don't exist
  */
 export const getPaginatedMovieReviews: (reviewFilter: ReviewFilter, movieId: number) => Promise<Review[]> = async function(reviewFilter: ReviewFilter, movieId: number): Promise<Review[]>{
     return await getConnection()
         .getRepository(Review)
         .createQueryBuilder("review")
+        .addSelect('user.username')
+        .innerJoin('review.user', 'user')
         .orderBy(reviewFilter.filter === "date" ? "review.createdAt" : "score", reviewFilter.sort === "asc" ? "ASC" : "DESC")
-        .skip(reviewFilter.skip * reviewFilter.take)
-        .take(reviewFilter.take)
+        .offset(reviewFilter.skip * reviewFilter.take)
+        .limit(reviewFilter.take)
         .where("review.movieId = :movieId", {movieId})
         .getMany();
 }

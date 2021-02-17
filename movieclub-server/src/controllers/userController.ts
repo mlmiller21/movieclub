@@ -3,11 +3,10 @@ import { Review } from "../entities/Review";
 import { Movie } from "../entities/Movie";
 
 import { findUser } from "../database/auth"
-import { deleteUserDB, updatePassword, updateUserDetails } from "../database/user";
+import { deleteUserDB, getPaginatedUserReviews, updatePassword, updateUserDetails } from "../database/user";
 import { getUserWatchlist, createWatchlistMovie, deleteWatchlistMovie } from "../database/watchlist";
 import { getUserFavourites, createFavouriteMovie, deleteFavouriteMovie } from "../database/favourites";
 import { deleteUserReview, editUserReview, findUserReview } from "../database/review";
-
 
 import { UserProfileEdit } from "../interfaces/UserEdit";
 import { UserGeneral } from "../interfaces/UserGeneral";
@@ -22,23 +21,19 @@ import { validateUserGeneral } from "../utils/validateUserGeneral";
 import { HttpError } from "../utils/CustomErrors";
 
 import { Request, Response } from "express";
-import { getConnection, InsertResult } from "typeorm";
-
-
-
-
+import { InsertResult } from "typeorm";
 
 
 /**
  * @description Edit user properties such as firstname, last name, etc
- * @param {UserProfileEdit} res user properties to edit
- * @param {Request} req Cookie containing user id
+ * @param {UserProfileEdit} userEdit user properties to edit
+ * @param {string} userId
  * @returns {Promise<User>} error if invalid, user otherwise
  */
-export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<User> = async function(userEdit: UserProfileEdit, req: Request): Promise<User> {
+export const editProfile: (userEdit: UserProfileEdit, userId: string) => Promise<User> = async function(userEdit: UserProfileEdit, userId: string): Promise<User> {
     const errors: CustomError[] = [];
     if (userEdit.firstName.length > 50 || userEdit.lastName.length > 50){
-        errors.push(fieldError("name", "name too long"));
+        errors.push(fieldError("name", "Name too long"));
     }
 
     if(errors.length > 0){
@@ -46,10 +41,10 @@ export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<U
     }
     //no validation errors, update user 
 
-    let user: User = await updateUserDetails(userEdit, req);
+    let user: User = await updateUserDetails(userEdit, userId);
 
     if (!user){
-        throw new HttpError([fieldError("user", "User doesn't exist")]);
+        throw new HttpError([fieldError("Error", "Unknown Error")]);
     }
 
     return user;
@@ -58,45 +53,42 @@ export const editProfile: (userEdit: UserProfileEdit, req: Request) => Promise<U
 /**
  * @description Edit username and email, requires user to enter password to update
  * @param {UserGeneral} userGeneral username, email, and password
- * @param {Request} req Cookie containing user id
+ * @param {string} userId
  * @returns {Promise<User>} error if invalid, user otherwise
  */
-export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Promise<User> = async function(userGeneral: UserGeneral, req: Request): Promise<User> {
+export const updateUserGeneral: (userGeneral: UserGeneral, userId: string) => Promise<User> = async function(userGeneral: UserGeneral, userId: string): Promise<User> {
     // validate input
     const errors = validateUserGeneral(userGeneral);
     if (errors.length > 0){
         throw new HttpError(errors);
     }
     //obtain the user
-    const user: User | undefined = await User.findOne({where: {id: req.session.userId}})
-    //user doesn't exist
-    if (!user){
-        throw new HttpError([fieldError("user", "user doesn't exist")]);
-    }
+    const user: User | undefined = await User.findOne({where: {id: userId}})
+
     //Compare the user password with the password in the db
-    const success = await comparePassword(userGeneral.password, user.password);
+    const success = await comparePassword(userGeneral.password, user!.password);
     if (!success){
-        throw new HttpError([fieldError("user", "user doesn't exist")]);
+        throw new HttpError([fieldError("password", "Incorrect password")], 401);
     }
     //everything good, update user
     try {
-        await User.update({id: req.session.userId}, {username: userGeneral.username, email: userGeneral.email})
+        await User.update({id: userId}, {username: userGeneral.username, email: userGeneral.email})
     }
     catch(err) {
         if (err.code === "23505"){
             if (err.detail.includes("username")){
-                throw new HttpError([fieldError("username", "username already exists")])
+                throw new HttpError([fieldError("username", "Username already exists")])
             }
             if (err.detail.includes("email")){
-                throw new HttpError([fieldError("email", "email already exists")])
+                throw new HttpError([fieldError("email", "Email already exists")])
             }
         }
     }
 
-    user.username = userGeneral.username;
-    user.email = userGeneral.email;
+    user!.username = userGeneral.username;
+    user!.email = userGeneral.email;
     
-    return user;
+    return user!;
 }
 
 /**
@@ -105,12 +97,12 @@ export const updateUserGeneral: (userGeneral: UserGeneral, req: Request) => Prom
  * @param {Request} req Request object containing user id
  * @returns {Promise<void>} void if valid, error otherwise
  */
-export const changePassword: (oldPassword: string, newPassword: string, req: Request) => Promise<void> = async function(oldPassword: string, newPassword: string, req: Request): Promise<void> {
+export const changePassword: (oldPassword: string, newPassword: string, userId: string) => Promise<void> = async function(oldPassword: string, newPassword: string, userId: string): Promise<void> {
     //obtain the user
-    const user: User | undefined = await findUser(req.session.userId);
+    const user: User | undefined = await findUser(userId);
     //user doesn't exist
     if (!user){
-        throw new HttpError([fieldError("user", "user doesn't exist")]);
+        throw new HttpError([fieldError("user", "User doesn't exist")], 404);
     }
     //validate the new password
     const error = validatePassword(newPassword);
@@ -121,12 +113,12 @@ export const changePassword: (oldPassword: string, newPassword: string, req: Req
     //Compare the user password with the password in the db
     const success = await comparePassword(oldPassword, user.password);
     if (!success){
-        throw new HttpError([fieldError("password", "incorrect password")])
+        throw new HttpError([fieldError("password", "Incorrect password")], 401)
     }
     const hashedPassword = await createPassword(newPassword);
     console.log(hashedPassword);
     try {
-        await updatePassword(hashedPassword, req);
+        await updatePassword(hashedPassword, userId);
     }
     catch(err){
         throw new HttpError([fieldError("Error", "Unknown Error")])
@@ -138,11 +130,13 @@ export const changePassword: (oldPassword: string, newPassword: string, req: Req
  * @param userid 
  */
 export const getUser: (userid: string) => Promise<User> = async function(userid: string): Promise<User> {
-    const user: User | undefined = await findUser(userid);
-    if (!user){
-        throw new HttpError([fieldError("user", "user not found")]);
+    try{
+        const user: User | undefined = await findUser(userid);
+        return user!;
     }
-    return user;
+    catch(err){
+        throw new HttpError([fieldError("error", "Unknown Error")]);
+    }
 }
 
 /**
@@ -152,15 +146,13 @@ export const getUser: (userid: string) => Promise<User> = async function(userid:
  * @returns {Promise<Review[]>} array of reviews, if none returned then array is empty
  */
 export const getUserReviews: (reviewFilter: ReviewFilter, userId: string) => Promise<Review[]> = async function(reviewFilter: ReviewFilter, userId: string): Promise<Review[]> {
-    const reviews: Review[] = await getConnection()
-    .getRepository(Review)
-    .createQueryBuilder("review")
-    .orderBy(reviewFilter.filter === "date" ? "review.createdAt" : "score", reviewFilter.sort === "asc" ? "ASC" : "DESC")
-    .skip(reviewFilter.skip * reviewFilter.take)
-    .take(reviewFilter.take)
-    .where("review.userId = :userId", {userId})
-    .getMany();
-    return reviews;
+    try{
+        const reviews: Review[] = await getPaginatedUserReviews(reviewFilter, userId);
+        return reviews;
+    }
+    catch(err){
+        throw new HttpError([fieldError("userid", "Invalid user id")])
+    }
 }
 
 /**
@@ -169,25 +161,29 @@ export const getUserReviews: (reviewFilter: ReviewFilter, userId: string) => Pro
  * @returns {Promise<Watchlist[]>} array of watchlist, empty if none returned
  */
 export const getWatchlist: (userId: string) => Promise<Movie[]> = async function(userId: string): Promise<Movie[]> {
-    const watchlist: Movie[] = await getUserWatchlist(userId);
-
-    return watchlist;
+    try{
+        const watchlist: Movie[] = await getUserWatchlist(userId);
+        return watchlist;
+    }
+    catch(err){
+        throw new HttpError([fieldError("error", "Unknown Error")])
+    }
+    
 }
 
 /**
  * @description insert a movie into the user's watchlist
  * @param {number} movieId 
- * @param {Request} req 
+ * @param {string} userId 
  * @returns {Promise<Movie>} inserted movie, or error
  */
-export const createWatchlistEntry: (movieId: number, req: Request) => Promise<Movie> = async function(movieId: number, req: Request): Promise<Movie> {
-
+export const createWatchlistEntry: (movieId: number, userId: string) => Promise<Movie> = async function(movieId: number, userId: string): Promise<Movie> {
     let watchlist: InsertResult;
     try{
-        watchlist = await createWatchlistMovie(movieId, req.session.userId);
+        watchlist = await createWatchlistMovie(movieId, userId);
     }
     catch(err){
-        throw new HttpError([fieldError("watchlist", "movie already added")]);
+        throw new HttpError([fieldError("watchlist", "Movie already added")]);
     }
     const movie: Movie | undefined = await Movie.findOne({where: {id: watchlist.identifiers[0].movieId}});
     return movie!;
@@ -196,20 +192,19 @@ export const createWatchlistEntry: (movieId: number, req: Request) => Promise<Mo
 /**
  * @description delete movie from watchlist
  * @param {number} movieId 
- * @param {Request} req 
+ * @param {string} userId 
  * @returns {Promise<boolean>} true if delete, false if content doesn't exist
  */
-export const deleteWatchlistEntry: (movieId: number, req: Request) => Promise<boolean> = async function(movieId: number, req: Request): Promise<boolean> {
-    
+export const deleteWatchlistEntry: (movieId: number, userId: string) => Promise<boolean> = async function(movieId: number, userId: string): Promise<boolean> {
     try{
-        const row = await deleteWatchlistMovie(movieId, req.session.userId);
-    if (row.affected === 0){
-        return false;
-    }
-    return true;
+        const row = await deleteWatchlistMovie(movieId, userId);
+        if (row.affected === 0){
+            return false;
+        }
+        return true;
     }
     catch(err){
-        throw new HttpError([fieldError("watchlist", "unknown error")]);
+        throw new HttpError([fieldError("error", "Unknown error")]);
     }
 }
 
@@ -219,24 +214,29 @@ export const deleteWatchlistEntry: (movieId: number, req: Request) => Promise<bo
  * @returns {Promise<Favourites[]>} array of favourites, empty if none returned
  */
 export const getFavourites: (userId: string) => Promise<Movie[]> = async function(userId: string): Promise<Movie[]> {
-    const watchlist: Movie[] = await getUserFavourites(userId);
+    try{
+        const watchlist: Movie[] = await getUserFavourites(userId);
+        return watchlist;
+    }
+    catch(err){
+        throw new HttpError([fieldError("error", "Unknown error")]);
+    }
     
-    return watchlist;
 }
 
 /**
  * @description insert a movie into the user's watchlist
  * @param {number} movieId 
- * @param {Request} req 
+ * @param {string} userId
  * @returns {Promise<Movie>} inserted movie, or error
  */
-export const createFavouriteEntry: (movieId: number, req: Request) => Promise<Movie> = async function(movieId: number, req: Request): Promise<Movie> {
+export const createFavouriteEntry: (movieId: number, userId: string) => Promise<Movie> = async function(movieId: number, userId: string): Promise<Movie> {
     let favourites: InsertResult;
     try{
-        favourites = await createFavouriteMovie(movieId, req.session.userId);
+        favourites = await createFavouriteMovie(movieId, userId);
     }
     catch(err){
-        throw new HttpError([fieldError("favourites", "movie already added")]);
+        throw new HttpError([fieldError("favourites", "Movie already added")]);
     }
     const movie: Movie | undefined = await Movie.findOne({where: {id: favourites.identifiers[0].movieId}});
     return movie!;
@@ -245,38 +245,37 @@ export const createFavouriteEntry: (movieId: number, req: Request) => Promise<Mo
 /**
  * @description delete movie from watchlist
  * @param {number} movieId 
- * @param {Request} req 
+ * @param {string} userId 
  * @returns {Promise<boolean>} true if delete, false if content doesn't exist
  */
-export const deleteFavouritesEntry: (movieId: number, req: Request) => Promise<boolean> = async function(movieId: number, req: Request): Promise<boolean> {
+export const deleteFavouritesEntry: (movieId: number, userId: string) => Promise<boolean> = async function(movieId: number, userId: string): Promise<boolean> {
     try{
-        const row = await deleteFavouriteMovie(movieId, req.session.userId);
+        const row = await deleteFavouriteMovie(movieId, userId);
     if (row.affected === 0){
         return false;
     }
     return true;
     }
     catch(err){
-        throw new HttpError([fieldError("watchlist", "invalid movie id")]);
+        throw new HttpError([fieldError("watchlist", "Invalid movie id")]);
     }
 }
 
 /**
  * @description delete a review and update the movie's score 
  * @param {number} reviewId 
- * @param {Request} req 
- * @returns {Promise<boolean>} return true if deleted, false if it doesn't exist and error if a transaction error occurs
+ * @param {string} userId
+ * @returns {Promise<void>}
  */
-export const deleteReview: (reviewId: number, req: Request) => Promise<boolean> = async function(reviewId: number, req: Request): Promise<boolean> {
-    const review: Review | undefined = await findUserReview(reviewId, req.session.userId);
+export const deleteReview: (reviewId: number, userId: string) => Promise<void> = async function(reviewId: number, userId: string): Promise<void> {
+    const review: Review | undefined = await findUserReview(reviewId, userId);
     if(!review){
-        return false;
+        throw new HttpError([fieldError('review', 'Review not found')])
     }
     try{
         await deleteUserReview(reviewId, review!.movieId, review!.score);
-        return true;
     }catch(err){
-        throw new HttpError([fieldError("delete review", "unknown error")]);
+        throw new HttpError([fieldError("error", "Unknown error")]);
     }
 }
 
@@ -284,14 +283,13 @@ export const deleteReview: (reviewId: number, req: Request) => Promise<boolean> 
  * @description Edit a review and update the movie's score 
  * @param {UserReview} userReview 
  * @param {number} reviewId 
- * @param {Request} req 
+ * @param {string} userId
  * @returns {Promise<Review>} return the review that was edited, throws error if review doesn't exist
  */
-export const editReview: (userReview: UserReview, reviewId: number, req: Request) => Promise<Review> = async function(userReview: UserReview, reviewId: number, req: Request): Promise<Review> {
-    
-    const review: Review | undefined = await findUserReview(reviewId, req.session.userId);
+export const editReview: (userReview: UserReview, reviewId: number, userId: string) => Promise<Review> = async function(userReview: UserReview, reviewId: number, userId: string): Promise<Review> {
+    const review: Review | undefined = await findUserReview(reviewId, userId);
     if(!review){
-        throw new HttpError([fieldError("review", "review doesn't exist")]);
+        throw new HttpError([fieldError("review", "Review doesn't exist")], 404);
     }
     try{
         await editUserReview(reviewId, review.movieId, userReview, review.score);
@@ -302,26 +300,20 @@ export const editReview: (userReview: UserReview, reviewId: number, req: Request
         return review;
     }
     catch(err){
-        throw new HttpError([fieldError("edit review", "unknown error")]);
+        throw new HttpError([fieldError("error", "Unknown error")]);
     }
 }
 
 /**
  * @description delete a user and update each movie per review deleted
  * @param {Request} req containing user id
- * @returns true if deleted, false if user doesn't exist and error if error occured during transaction
+ * @returns {Promise<void>}
  */
-export const deleteUser: (req: Request) => Promise<boolean> = async function(req: Request): Promise<boolean> {
-    const user: User | undefined = await findUser(req.session.userId);
-    if (!user){
-        false;
-    }
+export const deleteUser: (userId: string) => Promise<void> = async function(userId: string): Promise<void> {
     try{
-        await deleteUserDB(req.session.userId);
+        await deleteUserDB(userId);
     }
     catch(err){
-        throw new HttpError([fieldError("delete user", "unknown error")]);
+        throw new HttpError([fieldError("error", "Unknown error")]);
     }
-
-    return true;
 }

@@ -85,7 +85,7 @@ export const login: (userLogin: UserLogin, req: Request) => Promise<User> = asyn
     //Compare the user password with the password in the db
     const success = await comparePassword(userLogin.password, user.password);
     if (!success){
-        throw new HttpError([fieldError("password", "incorrect password")]);
+        throw new HttpError([fieldError("password", "incorrect password")], 401);
     }
     //set the cookie and login the user
     //regenerate to change ssid and prevent session fixation
@@ -140,7 +140,7 @@ export const forgotPassword: (email: string) => Promise<void> = async function (
     //check if email exists
     const user = await findEmail(email);
     if (!user){
-        throw new HttpError([fieldError("user", "User doesn't exist")]);
+        throw new HttpError([fieldError("user", "User doesn't exist")], 404);
     }
 
     let entryCheck: ForgotPassword | undefined = await ForgotPassword.findOne({where: {userid: user.id}});
@@ -151,8 +151,12 @@ export const forgotPassword: (email: string) => Promise<void> = async function (
     //Generate uuid token
     const token = v4();
 
-    await sendEmailForgotPassword(email, `<a href="http://localhost:3000/change-password-email?token=${token}">Click here to change your password</a>`);
-
+    try {
+        await sendEmailForgotPassword(email, `<a href="http://localhost:3000/change-password-email?token=${token}">Click here to change your password</a>`);
+    }
+    catch(err){
+        throw new HttpError([fieldError("email", "Error sending email")]);
+    }
     //expires after 2 hours
     let expire = new Date();
     expire.setHours(expire.getHours() + 2);
@@ -181,14 +185,14 @@ export const changePasswordEmail: (password: string, token: string) => Promise<U
 
     //Either token was never generated or the token expired
     if (!entry){
-        throw new HttpError([fieldError("token", "Token expired")]);
+        throw new HttpError([fieldError("token", "Token expired")], 404);
     }
 
     //Obtain the user
     const user = await User.findOne({where: {id: entry.userid}});
 
     if (!user){
-        throw new HttpError([fieldError("token", "User no longer exists")]);
+        throw new HttpError([fieldError("token", "User no longer exists")], 404);
     }
     let hashedPassword: string;
     try {

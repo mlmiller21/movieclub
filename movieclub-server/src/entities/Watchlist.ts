@@ -13,14 +13,14 @@ export class Watchlist extends BaseEntity {
     @CreateDateColumn()
     dateAdded: Date;
 
-    @ManyToOne(() => User, user => user.watchlistConnection, {
+    @ManyToOne(() => User, user => user.watchlist, {
         primary: true,
         onDelete: "CASCADE"
     })
     @JoinColumn({ name: "userId" })
     user: User
 
-    @ManyToOne(() => Movie, movie => movie.watchlistConnection, {
+    @ManyToOne(() => Movie, movie => movie.watchlist, {
         primary: true
     })
     @JoinColumn({ name: "movieId" })

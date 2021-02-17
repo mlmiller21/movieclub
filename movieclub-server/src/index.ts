@@ -9,6 +9,8 @@ import auth from "./routes/auth";
 import movie from "./routes/movie";
 import { HttpError } from "./utils/CustomErrors";
 import cors from "cors";
+import { getConnection } from "typeorm";
+import { User } from "./entities/User";
 
 declare module "express-session" {
     interface Session {
@@ -61,23 +63,29 @@ const main: any = async () => {
         })
     )
 
+    //fix this
+    app.get('/api/v1/searchuser/:username', async (req: Request, res: Response, next: NextFunction) => {
+        const user = await getConnection()
+        .getRepository(User)
+        .createQueryBuilder('user')
+        .where('"user".username LIKE :username', {username: `${req.params.username}%`}).getMany();
+        res.status(200).json({user})
+        
+    })
+
     app.use('/api/v1/auth', auth);
     app.use('/api/v1/user', user);
     app.use('/api/v1/movie', movie);
-    
-    
     
     /**
      * Search for a specific user by username
      * Return a list of users?
      * make use of debounce in frontend (maybe 400ms?)
      */
-    app.get('/searchuser/:username', async (req: Request, res: Response, next: NextFunction) => {
-        //getConnection().createQueryBuilder()
-    })
+    
 
     app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
-        res.status(400).json({err});
+        res.status(err.status).json({err});
         // This is error handler
     });
 
@@ -92,6 +100,8 @@ const main: any = async () => {
  *  - Sockets for friends
  *  - Upload image for user. Store in either: disk, memory, or stream to some cloud service
  *  - Send emails
+ *  - unit tests
+ *  - integration tests
  */
 
 

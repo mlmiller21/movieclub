@@ -4,3 +4,4 @@
 /node_modules
 /src/typeormconfig.ts
 /src/apikeys.ts
+/src/emailconfig.ts

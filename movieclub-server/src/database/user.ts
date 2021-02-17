@@ -1,9 +1,12 @@
 import { User } from "../entities/User";
+import { Review } from "../entities/Review";
 
 import { UserProfileEdit } from "../interfaces/UserEdit";
+import { ReviewFilter } from "../interfaces/ReviewFilter";
 
 import { getConnection } from "typeorm";
 import { Request } from "express";
+
 
 /**
  * @description Update a user's personal details
@@ -11,12 +14,12 @@ import { Request } from "express";
  * @param {Request} req 
  * @returns {Promise<User>} the updated user
  */
-export const updateUserDetails: (userEdit: UserProfileEdit, req: Request) => Promise<User> = async function(userEdit: UserProfileEdit, req: Request): Promise<User> {
+export const updateUserDetails: (userEdit: UserProfileEdit, userId: string) => Promise<User> = async function(userEdit: UserProfileEdit, userId: string): Promise<User> {
     return await getConnection()
     .createQueryBuilder()
     .update(User)
     .set({...userEdit})
-    .where('id = :id', {id: req.session.userId})
+    .where('id = :id', {id: userId})
     .returning('*')
     .execute()
     .then(res => res.raw[0]);
@@ -25,10 +28,10 @@ export const updateUserDetails: (userEdit: UserProfileEdit, req: Request) => Pro
 /**
  * @description updates a user's password to a new hashed password
  * @param {string} password 
- * @param {Request} req 
+ * @param {string} userId
  */
-export const updatePassword: (password: string, req: Request) => Promise<void> = async function(password: string, req: Request): Promise<void> {
-    await User.update({id: req.session.userId}, {password});
+export const updatePassword: (password: string, userId: string) => Promise<void> = async function(password: string, userId: string): Promise<void> {
+    await User.update({id: userId}, {password});
 }
 
 /**
@@ -47,4 +50,22 @@ export const deleteUserDB: (userId: string) => Promise<void> = async function(us
         `, [userId]);
         await tm.delete(User, {id: userId});
     });
+}
+
+
+/**
+ * @description returns the paginated results of a movie's reviews
+ * @param {ReviewFilter} reviewFilter 
+ * @param {string} userId 
+ * @returns {Promise<Review[]>} array of paginated reviews along with the username , or empty if they don't exist
+ */
+export const getPaginatedUserReviews: (reviewFilter: ReviewFilter, userId: string) => Promise<Review[]> = async function(reviewFilter: ReviewFilter, userId: string): Promise<Review[]> {
+    return getConnection()
+    .getRepository(Review)
+    .createQueryBuilder("review")
+    .orderBy(reviewFilter.filter === "date" ? "review.createdAt" : "score", reviewFilter.sort === "asc" ? "ASC" : "DESC")
+    .skip(reviewFilter.skip * reviewFilter.take)
+    .take(reviewFilter.take)
+    .where("review.userId = :userId", {userId})
+    .getMany();
 }

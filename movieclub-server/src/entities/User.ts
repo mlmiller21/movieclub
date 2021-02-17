@@ -40,10 +40,10 @@ export class User extends BaseEntity {
     reviews: Review[];
 
     @OneToMany(() => Watchlist, watchlist => watchlist.user)
-    watchlistConnection: Watchlist[];
+    watchlist: Watchlist[];
 
     @OneToMany(() => Favourites, Favourites => Favourites.user)
-    favouritesConnection: Favourites[];
+    favourites: Favourites[];
 
     
 

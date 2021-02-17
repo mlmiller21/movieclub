@@ -18,9 +18,9 @@ import { Request, Response } from "express";
  * @param {UserReview} userReview score, title, body, spoilers
  * @param {number} movieId moviepk corresponding to TMDB
  * @param {Request} req containing user session
- * @returns {Promise<UserReviewsResponse>} posted review
+ * @returns {Promise<void>}
  */
-export const createReview: (userReview: UserReview, movieId: number, req: Request) => Promise<Review[]> = async function(userReview: UserReview, movieId: number, req: Request): Promise<Review[]> {
+export const createReview: (userReview: UserReview, movieId: number, req: Request) => Promise<void> = async function(userReview: UserReview, movieId: number, req: Request): Promise<void> {
     if (userReview.score < 1 || userReview.score > 10){
         throw new HttpError([fieldError("score", "Invalid score")]);
     }
@@ -33,11 +33,6 @@ export const createReview: (userReview: UserReview, movieId: number, req: Reques
         //User already submitted a review
         throw new HttpError([fieldError("review", "Already submitted review for this movie")]);
     }
-
-    //FOR TESTING
-    const newReview: Review | undefined = await Review.findOne({where: {movieId, userId: req.session.userId}, order: {id: 'DESC'}});
-    
-    return [newReview!]
 }
 
 /**
@@ -47,7 +42,12 @@ export const createReview: (userReview: UserReview, movieId: number, req: Reques
  * @returns {Promise<Review[]>} array of reviews, if none returned then array is empty
  */
 export const getMovieReviews: (reviewFilter: ReviewFilter, movieId: number) => Promise<Review[]> = async function(reviewFilter: ReviewFilter, movieId: number): Promise<Review[]> {
-    const reviews: Review[] = await getPaginatedMovieReviews(reviewFilter, movieId);
-    return reviews;
+    try{
+        const reviews: Review[] = await getPaginatedMovieReviews(reviewFilter, movieId);
+        return reviews;
+    }
+    catch(err){
+        throw new HttpError([fieldError("movieid", "Invalid movie id")])
+    }
 }
 

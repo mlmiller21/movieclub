@@ -13,18 +13,16 @@ export class Favourites extends BaseEntity {
     @CreateDateColumn()
     dateAdded: Date;
 
-    @ManyToOne(() => User, user => user.favouritesConnection, {
+    @ManyToOne(() => User, user => user.favourites, {
         primary: true,
         onDelete: "CASCADE"
     })
     @JoinColumn({ name: "userId" })
     user: User
 
-    @ManyToOne(() => Movie, movie => movie.favouritesConnection, {
-        primary: true,
+    @ManyToOne(() => Movie, movie => movie.favourites, {
+        primary: true
     })
     @JoinColumn({ name: "movieId" })
     movie: Movie
-    
-
 }

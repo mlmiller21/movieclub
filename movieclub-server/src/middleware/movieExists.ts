@@ -33,7 +33,7 @@ export const movieExists: (req: Request, res: Response, next: NextFunction) => v
     // first check if it's in db
     let movie: Movie | undefined;
     try{
-        movie = await findMovie(movieid);
+        movie = await findMovie(+movieid);
     }
     catch(err){
         return next(err);
@@ -47,15 +47,13 @@ export const movieExists: (req: Request, res: Response, next: NextFunction) => v
         }
         catch(err){
             //Movie doesn't exist within TMDB under the given id
-            const error = new HttpError([fieldError("movie", "Movie doesn't exist")]);
+            const error = new HttpError([fieldError("movie", "Movie doesn't exist")], 404);
             return next(error);
         }
         //Obtain the id and the title of the movie from the response
-        const {data: {id: id, original_title: original_title, poster_path: poster_path }}: {data: {id: number, original_title: string, poster_path: string}} = response!;
+        const {data: {id: id, title: title, poster_path: poster_path }}: {data: {id: number, title: string, poster_path: string}} = response!;
         //If the inputted title doesn't match the title in TMDB, error occurs
-        if (original_title != movieTitle){
-            console.log(original_title);
-            console.log(movieTitle);
+        if (title != movieTitle){
             const error = new HttpError([fieldError("movie", "Titles don't match")]);
             next(error);
         }

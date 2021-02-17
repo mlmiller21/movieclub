@@ -1,7 +1,7 @@
 import { Movie } from "../entities/Movie";
 import { Watchlist } from "../entities/Watchlist";
 
-import { getConnection, InsertResult } from "typeorm";
+import { getConnection, InsertResult, getManager } from "typeorm";
 
 /**
  * @description get a user's watchlist
@@ -12,8 +12,7 @@ export const getUserWatchlist: (userId: string) => Promise<Movie[]> = async func
     return await getConnection()
     .getRepository(Movie)
     .createQueryBuilder("movie")
-    .select(["movie.id", "movie.title", "movie.posterPath", "movie.score"])
-    .innerJoin(Watchlist, "watchlist", 'watchlist."movieId" = movie.id')
+    .innerJoin("movie.watchlist", 'watchlist')
     .where('watchlist."userId" = :userId', {userId})
     .orderBy('watchlist."dateAdded"', "ASC")
     .getMany();

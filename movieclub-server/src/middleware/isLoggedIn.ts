@@ -9,8 +9,7 @@ import { HttpError } from "../utils/CustomErrors";
  */
 export const isLoggedIn: (req: Request, res: Response, next: NextFunction) => void = function (req: Request, res: Response, next: NextFunction) {
     if (!req.session.userId){
-        let error = new HttpError([{field: "Unauthorized", message: "Must be logged in to access"}])
-        error.status = 401;
+        let error = new HttpError([{field: "Unauthorized", message: "Must be logged in to access"}], 401)
         next(error);
     }
     else{

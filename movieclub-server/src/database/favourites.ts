@@ -12,8 +12,7 @@ export const getUserFavourites: (userId: string) => Promise<Movie[]> = async fun
     return await getConnection()
     .getRepository(Movie)
     .createQueryBuilder("movie")
-    .select(["movie.id", "movie.title", "movie.posterPath", "movie.score"])
-    .innerJoin(Favourites, "favourites", 'favourites."movieId" = movie.id')
+    .innerJoin("movie.favourites", 'favourites')
     .where('favourites."userId" = :userId', {userId})
     .orderBy('favourites."dateAdded"', "ASC")
     .getMany();
