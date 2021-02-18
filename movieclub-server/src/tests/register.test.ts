@@ -42,7 +42,7 @@ describe('Create a user', () => {
             password: 'password',
             email: 'test@test.ca'
         });
-        console.log(res.body.err);
         expect(res.status).toEqual(400);
+        expect(res.body.err.errors).toHaveLength(2);
     })
 })
