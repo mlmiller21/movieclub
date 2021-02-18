@@ -69,3 +69,14 @@ export const getPaginatedUserReviews: (reviewFilter: ReviewFilter, userId: strin
     .where("review.userId = :userId", {userId})
     .getMany();
 }
+
+export const getUserList: (user: string) => Promise<User[]> = async function(user: string): Promise<User[]> {
+    return await getConnection()
+    .getRepository(User)
+    .createQueryBuilder('user')
+    .select(['user.id', 'user.username', 'user.firstName', 'user.lastName', 'user.email'])
+    .where('"user".username LIKE :username', {username: `${user}%`})
+    .limit(10)
+    .getMany();
+
+}

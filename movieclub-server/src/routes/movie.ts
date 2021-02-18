@@ -11,28 +11,6 @@ const router = express.Router();
 // Could seed the database potentially?
 
 /**
- * Create a new review for a movie
- * If the movie entry doesn't exist, create the movie
- *  - Movie entry needs to be matched to opendb to prevent randoms from adding id
- *  - call api from within this route, match id and make sure it exists, then match the title of movie
- * returns 201 if review created, 400 if invalid id, titles don't match, or user has already created a review and 404 if movie doesn't exist
- */
-router.post('/:movieid/review', isLoggedIn, isParamNaN("movieid"), movieExists, async (req: Request, res: Response, next: NextFunction) => {
-    const {score, title, body, spoilers} = req.body;
-    //movieExists validated that movieid is a valid number, allowing unary 
-    const movieid = +req.params.movieid;
-
-    try{
-        await createReview({score, title, body, spoilers}, movieid, req);
-        res.status(201).end();
-    }
-    catch(err){
-        next(err);
-    }
-    
-})
-
-/**
  * Obtain all reviews for a movie
  * filter by 
  *  date (asc, desc)
@@ -54,5 +32,28 @@ router.get('/:movieid/reviews', validateFilterQuery, isParamNaN("movieid"), asyn
         next(err);
     }    
 })
+
+/**
+ * Create a new review for a movie
+ * If the movie entry doesn't exist, create the movie
+ *  - Movie entry needs to be matched to opendb to prevent randoms from adding id
+ *  - call api from within this route, match id and make sure it exists, then match the title of movie
+ * returns 201 if review created, 400 if invalid id, titles don't match, or user has already created a review and 404 if movie doesn't exist
+ */
+router.post('/:movieid/review', isLoggedIn, isParamNaN("movieid"), movieExists, async (req: Request, res: Response, next: NextFunction) => {
+    const {score, title, body, spoilers} = req.body;
+    //movieExists validated that movieid is a valid number, allowing unary 
+    const movieid = +req.params.movieid;
+
+    try{
+        await createReview({score, title, body, spoilers}, movieid, req);
+        res.status(201).end();
+    }
+    catch(err){
+        next(err);
+    }
+    
+})
+
 
 export default router;
