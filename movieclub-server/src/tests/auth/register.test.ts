@@ -1,6 +1,6 @@
 import express from "express";
 import request from "supertest";
-import { server } from "../app";
+import { server } from "../../app";
 import { getConnection } from "typeorm";
 //import {} from "../loaders/express"
 

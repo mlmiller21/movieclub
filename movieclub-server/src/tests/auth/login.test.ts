@@ -1,6 +1,6 @@
 import express from "express";
 import request from "supertest";
-import { server } from "../app";
+import { server } from "../../app";
 import { getConnection } from "typeorm";
 //import {} from "../loaders/express"
 
@@ -69,6 +69,7 @@ describe('Login a user', () => {
         });
 
         expect(res.status).toEqual(400);
+        expect(res.body.err.errors[0].message).toBe("username doesn't exist");
     })
 
     it('Email doesn\'t exist', async () => {
@@ -88,6 +89,8 @@ describe('Login a user', () => {
         });
 
         expect(res.status).toEqual(400);
+        expect(res.body.err.errors[0].message).toBe("email doesn't exist");
+
     })
 
     it('Incorrect password', async () => {
@@ -107,5 +110,6 @@ describe('Login a user', () => {
         });
 
         expect(res.status).toEqual(401);
+        expect(res.body.err.errors[0].message).toBe("incorrect password");
     })
 })
