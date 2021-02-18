@@ -14,9 +14,9 @@ import { User } from "./entities/User";
 
 declare module "express-session" {
     interface Session {
-      userId: string;
+        userId: string;
     }
-  }
+}
 
 const port = process.env.PORT || 3080;
 
@@ -103,6 +103,5 @@ const main: any = async () => {
  *  - unit tests
  *  - integration tests
  */
-
 
 main();

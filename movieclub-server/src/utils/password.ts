@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
  * @param {string} password 
  * @returns {Promise<string>} hashed password if successful, error otherwise
  */
-export const createPassword: (password: string) => Promise<string> = function (password: string): Promise<string> {
+export const createPassword: (password: string) => Promise<string> = async function (password: string): Promise<string> {
     return new Promise((res, rej) => {
         const workFactor = 12;
         //bcrypt encodes in base64
@@ -29,7 +29,7 @@ export const createPassword: (password: string) => Promise<string> = function (p
 /**
  * compare user password with hashed salted password 
  * @param {string} userPassword user inputted password
- * @param {string} dbPassword password stored in db
+ * @param {string} dbPassword hashed password stored in db
  * @returns {Promise<boolean>} true if equivalent, false otherwise
  */
 export const comparePassword: (userPassword: string, dbPassword: string) => Promise<boolean> = async function (userPassword: string, dbPassword: string): Promise<boolean> {

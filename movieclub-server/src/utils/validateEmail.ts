@@ -14,8 +14,8 @@ import { fieldError } from "../utils/fieldError";
  * @returns {CustomError | null} return CustomError if error, null otherwise
  */
 export const validateEmail: (email: string) => CustomError | null = function(email: string): CustomError | null {
-    if (email.length < 3){
-        return fieldError("email", "email too short")
+    if (email.length === 0){
+        return fieldError("email", "email can't be empty")
     }
     //The total length should be no more than 254 characters.
     if (email.length > 254){

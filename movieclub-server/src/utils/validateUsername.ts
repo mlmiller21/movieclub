@@ -11,11 +11,11 @@ export const validateUsername: (username: string) => CustomError | null = functi
     //validate user
     //username can't be empty
     if (username.length <= 2) {
-        return fieldError("username", "username length must be greater than 2")
+        return fieldError("username", "length must be at least 3")
     }
     //user can't be greater than 50
     if (username.length > 50) {
-        return fieldError("username", "length must be less than 51")
+        return fieldError("username", "length must be 50 or less")
     }
     //Letters, numbers, dashes, and underscores only
     if (!usernameRe.test(username)){
