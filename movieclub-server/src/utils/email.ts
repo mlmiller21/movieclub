@@ -25,5 +25,5 @@ export async function sendEmailForgotPassword(to: string, html: string) {
     html, // plain text body
   });
 
-  console.log(nodemailer.getTestMessageUrl(info));
+  //console.log(nodemailer.getTestMessageUrl(info));
 }

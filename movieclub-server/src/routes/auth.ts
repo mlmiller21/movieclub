@@ -51,7 +51,8 @@ router.get('/me', isLoggedIn, async (req: Request, res: Response, next: NextFunc
             id: user.id,
             username: user.username,
             firstName: user.firstName,
-            lastName: user.lastName
+            lastName: user.lastName,
+            email: user.email
         })
     }
     catch(err){

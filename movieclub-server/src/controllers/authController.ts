@@ -192,6 +192,7 @@ export const changePasswordEmail: (password: string, token: string) => Promise<U
     const user = await User.findOne({where: {id: entry.userid}});
 
     if (!user){
+        //shouldn't happen, deleted user cascade deletes entry
         throw new HttpError([fieldError("token", "User no longer exists")], 404);
     }
     let hashedPassword: string;
