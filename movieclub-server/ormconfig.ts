@@ -20,10 +20,10 @@ module.exports = [
       "password": "postgres",
       "database": "movieclub_test",
       "synchronize": true,
-      "logging": true,
-      "dropSchema": false,
-      "entities": ["dist/entities/**/*.js"],
-      "migrations": ["dist/migration/**/*.js"],
-      "subscribers": ["dist/subscriber/**/*.js"]
+      "logging": false,
+      "dropSchema": true,
+      "entities": ["src/entities/**/*.ts"],
+      "migrations": ["src/migration/**/*.ts"],
+      "subscribers": ["src/subscriber/**/*.ts"],
     }
   ]
