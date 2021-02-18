@@ -58,12 +58,14 @@ export const editProfile: (userEdit: UserProfileEdit, userId: string) => Promise
  */
 export const updateUserGeneral: (userGeneral: UserGeneral, userId: string) => Promise<User> = async function(userGeneral: UserGeneral, userId: string): Promise<User> {
     // validate input
+    console.log(userId);
     const errors = validateUserGeneral(userGeneral);
     if (errors.length > 0){
         throw new HttpError(errors);
     }
     //obtain the user
     const user: User | undefined = await User.findOne({where: {id: userId}})
+    
 
     //Compare the user password with the password in the db
     const success = await comparePassword(userGeneral.password, user!.password);
