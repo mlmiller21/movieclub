@@ -1,4 +1,4 @@
-[
+module.exports = [
     {
       "name": "development",
       "type": "postgres",
@@ -18,10 +18,10 @@
       "host": "localhost",
       "username": "postgres",
       "password": "postgres",
-      "database": "movieclub-test",
+      "database": "movieclub_test",
       "synchronize": true,
-      "logging": false,
-      "dropSchema": true,
+      "logging": true,
+      "dropSchema": false,
       "entities": ["dist/entities/**/*.js"],
       "migrations": ["dist/migration/**/*.js"],
       "subscribers": ["dist/subscriber/**/*.js"]

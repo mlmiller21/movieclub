@@ -116,7 +116,6 @@ export const changePassword: (oldPassword: string, newPassword: string, userId: 
         throw new HttpError([fieldError("password", "Incorrect password")], 401)
     }
     const hashedPassword = await createPassword(newPassword);
-    console.log(hashedPassword);
     try {
         await updatePassword(hashedPassword, userId);
     }

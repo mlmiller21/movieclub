@@ -40,7 +40,6 @@ router.patch('/:userid/general', userExists, userAuth, async (req: Request, res:
     const userid = req.params.userid;
     try {
         const user = await updateUserGeneral({username, email, password}, userid);
-        console.log(user);
         res.status(200).json({
             username: user.username,
             email: user.email

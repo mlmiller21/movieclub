@@ -19,9 +19,10 @@ export const getExistingUserEmail: (userCreation: UserRegister) => Promise<User[
     //     .where("user.username = :username", { username: userCreation.username })
     //     .orWhere("user.email = :email", {email: userCreation.email})
     //     .getMany();
-    return await getConnection()
+    const connection = await getConnection()
     .getRepository(User)
     .find({where: [{username: userCreation.username}, {email: userCreation.email}]});
+    return connection;
 }
 
 /**
