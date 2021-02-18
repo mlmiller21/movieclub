@@ -63,9 +63,11 @@ export const getPaginatedUserReviews: (reviewFilter: ReviewFilter, userId: strin
     return getConnection()
     .getRepository(Review)
     .createQueryBuilder("review")
-    .orderBy(reviewFilter.filter === "date" ? "review.createdAt" : "score", reviewFilter.sort === "asc" ? "ASC" : "DESC")
-    .skip(reviewFilter.skip * reviewFilter.take)
-    .take(reviewFilter.take)
+    .addSelect('movie.title')
+    .innerJoin('review.movie', 'movie')
+    .orderBy(reviewFilter.filter === "date" ? "review.createdAt" : "review.score", reviewFilter.sort === "asc" ? "ASC" : "DESC")
+    .offset(reviewFilter.skip * reviewFilter.take)
+    .limit(reviewFilter.take)
     .where("review.userId = :userId", {userId})
     .getMany();
 }
